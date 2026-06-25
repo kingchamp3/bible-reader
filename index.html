@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>성경 읽기 - 깊이 있는 묵상을 위한 공간</title>
+    <meta name="description" content="성경 개역한글 번역본을 온라인으로 읽고, 검색하며, 북마크와 형광펜 메모를 남겨 깊이 있는 묵상을 돕는 웹 앱입니다.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@300;400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Custom Style Sheets -->
+    <link rel="stylesheet" href="index.css">
+</head>
+<body class="theme-sepia">
+    <!-- App Container -->
+    <div class="app-container" id="appContainer">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="appSidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i data-lucide="book-open"></i>
+                    <span>성경 읽기</span>
+                </div>
+                <button class="icon-btn close-sidebar-btn" id="closeSidebarBtn" aria-label="사이드바 닫기">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            
+            <div class="sidebar-tabs">
+                <button class="tab-btn active" id="tabOtBtn">구약</button>
+                <button class="tab-btn" id="tabNtBtn">신약</button>
+            </div>
+            
+            <!-- Books List -->
+            <div class="books-container" id="booksContainer">
+                <!-- Javascript will populate this -->
+            </div>
+            
+            <!-- Navigation Actions -->
+            <div class="sidebar-footer">
+                <button class="footer-action-btn" id="sidebarSearchBtn">
+                    <i data-lucide="search"></i>
+                    <span>구절 검색</span>
+                </button>
+                <button class="footer-action-btn" id="sidebarLibraryBtn">
+                    <i data-lucide="bookmark"></i>
+                    <span>북마크 & 메모</span>
+                </button>
+            </div>
+        </aside>
+        
+        <!-- Sidebar Overlay (Mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-left">
+                    <button class="icon-btn menu-btn" id="menuBtn" aria-label="메뉴 열기">
+                        <i data-lucide="menu"></i>
+                    </button>
+                    <div class="current-location" id="currentLocation">
+                        <span class="current-book" id="currentBookName">창세기</span>
+                        <span class="current-chapter" id="currentChapterNum">1장</span>
+                        <i data-lucide="chevron-down" class="dropdown-icon" id="quickNavTrigger"></i>
+                    </div>
+                </div>
+                
+                <div class="header-actions">
+                    <button class="icon-btn" id="headerSearchBtn" aria-label="검색">
+                        <i data-lucide="search"></i>
+                    </button>
+                    <button class="icon-btn" id="settingsBtn" aria-label="설정">
+                        <i data-lucide="settings"></i>
+                    </button>
+                    <button class="icon-btn" id="libraryBtn" aria-label="북마크 및 메모">
+                        <i data-lucide="folder-heart"></i>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Quick Chapter Selection Dropdown Overlay -->
+            <div class="quick-nav-panel" id="quickNavPanel">
+                <div class="quick-nav-header">
+                    <h4>빠른 이동</h4>
+                    <button class="icon-btn" id="quickNavCloseBtn"><i data-lucide="x"></i></button>
+                </div>
+                <div class="quick-nav-body">
+                    <div class="quick-books-list" id="quickBooksList"></div>
+                    <div class="quick-chapters-grid" id="quickChaptersGrid"></div>
+                </div>
+            </div>
+
+            <!-- Reading Viewer Container -->
+            <div class="viewer-container" id="viewerContainer">
+                <div class="reading-area">
+                    <!-- Daily Verse Card (Hero element shown on home or top of first page) -->
+                    <div class="daily-verse-card" id="dailyVerseCard">
+                        <div class="card-bg-glow"></div>
+                        <div class="card-content">
+                            <span class="card-tag">오늘의 말씀</span>
+                            <blockquote class="verse-quote" id="dailyVerseText">
+                                "태초에 하나님이 천지를 창조하시니라"
+                            </blockquote>
+                            <cite class="verse-reference" id="dailyVerseRef">창세기 1:1</cite>
+                        </div>
+                    </div>
+
+                    <!-- Book & Chapter Title -->
+                    <h1 class="chapter-title" id="chapterTitle">창세기 1장</h1>
+                    
+                    <!-- Verses List -->
+                    <div class="verses-list font-myeongjo" id="versesList">
+                        <!-- Javascript will populate this -->
+                    </div>
+                    
+                    <!-- Bottom Navigation -->
+                    <div class="chapter-navigation">
+                        <button class="nav-btn prev-btn" id="prevChapterBtn">
+                            <i data-lucide="chevron-left"></i>
+                            <span>이전 장</span>
+                        </button>
+                        <button class="nav-btn next-btn" id="nextChapterBtn">
+                            <span>다음 장</span>
+                            <i data-lucide="chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Verse Interaction Menu (Popover) -->
+        <div class="verse-action-popover" id="verseActionPopover">
+            <div class="popover-arrow"></div>
+            <div class="popover-row highlighter-row">
+                <button class="highlight-dot color-yellow" data-color="yellow" title="노란색"></button>
+                <button class="highlight-dot color-blue" data-color="blue" title="파란색"></button>
+                <button class="highlight-dot color-green" data-color="green" title="초록색"></button>
+                <button class="highlight-dot color-pink" data-color="pink" title="분홍색"></button>
+                <button class="highlight-clear" data-color="none" title="하이라이트 지우기">
+                    <i data-lucide="eraser"></i>
+                </button>
+            </div>
+            <div class="popover-divider"></div>
+            <div class="popover-row action-row">
+                <button class="popover-btn" id="popoverBookmarkBtn">
+                    <i data-lucide="bookmark"></i>
+                    <span>북마크</span>
+                </button>
+                <button class="popover-btn" id="popoverNoteBtn">
+                    <i data-lucide="edit-3"></i>
+                    <span>메모</span>
+                </button>
+                <button class="popover-btn" id="popoverCopyBtn">
+                    <i data-lucide="copy"></i>
+                    <span>복사</span>
+                </button>
+            </div>
+            <!-- Popover Note Input -->
+            <div class="popover-note-input-container" id="popoverNoteContainer">
+                <textarea id="popoverNoteText" placeholder="이 구절에 메모를 작성하세요..."></textarea>
+                <div class="popover-note-actions">
+                    <button class="text-btn cancel" id="popoverNoteCancel">취소</button>
+                    <button class="solid-btn save" id="popoverNoteSave">저장</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Drawer Panel -->
+        <div class="drawer" id="searchDrawer">
+            <div class="drawer-header">
+                <h3>성경 구절 검색</h3>
+                <button class="icon-btn close-drawer-btn" id="closeSearchDrawerBtn" aria-label="검색창 닫기">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="drawer-body">
+                <div class="search-input-wrapper">
+                    <input type="text" id="searchInput" placeholder="검색할 단어를 입력하세요 (예: 사랑, 믿음)" autocomplete="off">
+                    <button class="search-submit-btn" id="searchSubmitBtn">
+                        <i data-lucide="search"></i>
+                    </button>
+                </div>
+                <div class="search-stats" id="searchStats">단어를 입력하고 검색을 시작해 보세요.</div>
+                <div class="search-results" id="searchResults">
+                    <!-- Search result items will be here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Library (Bookmarks & Notes) Drawer Panel -->
+        <div class="drawer" id="libraryDrawer">
+            <div class="drawer-header">
+                <h3>북마크 & 메모</h3>
+                <button class="icon-btn close-drawer-btn" id="closeLibraryDrawerBtn" aria-label="서랍 닫기">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="library-tabs">
+                <button class="lib-tab-btn active" id="libTabBookmarks">북마크</button>
+                <button class="lib-tab-btn" id="libTabNotes">메모</button>
+                <button class="lib-tab-btn" id="libTabHighlights">하이라이트</button>
+            </div>
+            <div class="drawer-body">
+                <div class="library-content" id="libraryContent">
+                    <!-- Bookmarked verses or Notes list will be here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div class="modal-overlay" id="settingsModal">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3>독서 환경 설정</h3>
+                    <button class="icon-btn close-modal-btn" id="closeSettingsModalBtn" aria-label="설정 닫기">
+                        <i data-lucide="x"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Theme Settings -->
+                    <div class="setting-group">
+                        <label class="setting-label">테마 선택</label>
+                        <div class="theme-selector-grid">
+                            <button class="theme-select-btn theme-light-btn" data-theme="light">
+                                <span class="theme-preview">가</span>
+                                <span class="theme-name">밝은 모드</span>
+                            </button>
+                            <button class="theme-select-btn theme-sepia-btn active" data-theme="sepia">
+                                <span class="theme-preview">가</span>
+                                <span class="theme-name">세피아 (추천)</span>
+                            </button>
+                            <button class="theme-select-btn theme-dark-btn" data-theme="dark">
+                                <span class="theme-preview">가</span>
+                                <span class="theme-name">어두운 모드</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Font Family Settings -->
+                    <div class="setting-group">
+                        <label class="setting-label">글꼴 스타일</label>
+                        <div class="font-selector-row">
+                            <button class="font-select-btn font-myeongjo-btn active" data-font="myeongjo">
+                                나눔명조 (Serif)
+                            </button>
+                            <button class="font-select-btn font-sans-btn" data-font="sans">
+                                노토산스 (Sans-serif)
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Font Size Settings -->
+                    <div class="setting-group">
+                        <div class="setting-label-row">
+                            <label class="setting-label">글자 크기</label>
+                            <span class="setting-value-indicator" id="fontSizeValue">18px</span>
+                        </div>
+                        <div class="range-slider-wrapper">
+                            <span class="font-size-small">가</span>
+                            <input type="range" id="fontSizeSlider" min="14" max="28" step="1" value="18">
+                            <span class="font-size-large">가</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Line Height Settings -->
+                    <div class="setting-group">
+                        <div class="setting-label-row">
+                            <label class="setting-label">줄 간격</label>
+                            <span class="setting-value-indicator" id="lineHeightValue">1.8</span>
+                        </div>
+                        <div class="range-slider-wrapper">
+                            <i data-lucide="align-justify" class="icon-small"></i>
+                            <input type="range" id="lineHeightSlider" min="1.4" max="2.4" step="0.1" value="1.8">
+                            <i data-lucide="align-justify" class="icon-large"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Custom Application Code -->
+    <script src="app.js"></script>
+</body>
+</html>
