@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>말씀길 - 개역한글 성경</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar" aria-label="성경 선택">
+        <section class="brand">
+          <p class="translation">개역한글</p>
+          <h1>말씀길</h1>
+          <p>전체 성경을 읽고 검색하는 조용한 웹 성경</p>
+        </section>
+
+        <label class="search-box">
+          <span>전체 검색</span>
+          <input id="searchInput" type="search" placeholder="예: 사랑, 믿음, 창조" autocomplete="off" />
+        </label>
+
+        <section class="toolbar" aria-label="읽기 설정">
+          <button id="decreaseFont" type="button">A-</button>
+          <output id="fontSizeLabel">20</output>
+          <button id="increaseFont" type="button">A+</button>
+          <button id="themeToggle" type="button">어둡게</button>
+        </section>
+
+        <section class="selectors">
+          <label>
+            <span>성경</span>
+            <select id="bookSelect"></select>
+          </label>
+          <label>
+            <span>장</span>
+            <select id="chapterSelect"></select>
+          </label>
+        </section>
+
+        <section class="book-list" aria-label="성경 목록">
+          <div class="testament-tabs">
+            <button id="oldTab" class="active" type="button">구약</button>
+            <button id="newTab" type="button">신약</button>
+          </div>
+          <div id="bookList" class="book-buttons"></div>
+        </section>
+      </aside>
+
+      <section class="reader-panel">
+        <header class="reader-header">
+          <div>
+            <p id="readerMeta" class="reader-meta">개역한글</p>
+            <h2 id="readerTitle">창세기 1장</h2>
+          </div>
+          <div class="bookmark-count">
+            <strong id="bookmarkCount">0</strong>
+            <span>저장</span>
+          </div>
+        </header>
+
+        <section id="resultSummary" class="result-summary" hidden></section>
+        <article id="verseList" class="verse-list" aria-live="polite"></article>
+      </section>
+    </main>
+
+    <script src="./krv-data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
