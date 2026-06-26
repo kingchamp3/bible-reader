@@ -52,5 +52,5 @@ server.on("error", (error) => {
 });
 
 server.listen(port, "127.0.0.1", () => {
-  console.log(`말씀길 웹 성경: http://127.0.0.1:${port}`);
+  console.log(`성경을 읽다 웹 성경: http://127.0.0.1:${port}`);
 });

@@ -151,7 +151,7 @@ export default function App() {
       <StatusBar style="dark" />
       <View style={styles.header}>
         <View style={styles.titleBlock}>
-          <Text style={styles.appName}>말씀길</Text>
+          <Text style={styles.appName}>성경을 읽다</Text>
           <Text style={styles.subtitle}>개역한글 전체 성경</Text>
         </View>
         <View style={styles.counter}>
