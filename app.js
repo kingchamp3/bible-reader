@@ -1,5 +1,7 @@
 const bibleBundle = window.BIBLE_TRANSLATIONS;
 const searchLimit = 300;
+const memberStorageKey = "bibleReaderMembers";
+const legacyBookmarkKey = "malsseumgilBookmarks";
 
 if (!bibleBundle?.translations?.length) {
   const verseList = document.querySelector("#verseList");
@@ -14,6 +16,32 @@ if (!bibleBundle?.translations?.length) {
   throw new Error("BIBLE_TRANSLATIONS is missing.");
 }
 
+function createMember(name) {
+  return {
+    id: `member-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name,
+    bookmarks: [],
+    readChapters: [],
+    lastRead: null,
+  };
+}
+
+function loadMemberState() {
+  const saved = JSON.parse(localStorage.getItem(memberStorageKey) || "null");
+  if (saved?.members?.length) {
+    return saved;
+  }
+
+  const defaultMember = createMember("기본 회원");
+  defaultMember.bookmarks = JSON.parse(localStorage.getItem(legacyBookmarkKey) || "[]");
+  return {
+    activeMemberId: defaultMember.id,
+    members: [defaultMember],
+  };
+}
+
+const memberState = loadMemberState();
+
 const state = {
   activeTestament: "old",
   selectedTranslationId: bibleBundle.defaultTranslationId,
@@ -21,11 +49,19 @@ const state = {
   selectedChapter: 1,
   fontSize: 20,
   showFavorites: false,
-  bookmarks: new Set(JSON.parse(localStorage.getItem("malsseumgilBookmarks") || "[]")),
+  members: memberState.members,
+  activeMemberId: memberState.activeMemberId,
+  bookmarks: new Set(),
 };
 
 const els = {
   searchInput: document.querySelector("#searchInput"),
+  memberSelect: document.querySelector("#memberSelect"),
+  memberNameInput: document.querySelector("#memberNameInput"),
+  addMemberButton: document.querySelector("#addMemberButton"),
+  progressPercent: document.querySelector("#progressPercent"),
+  progressSummary: document.querySelector("#progressSummary"),
+  lastReadButton: document.querySelector("#lastReadButton"),
   translationSelect: document.querySelector("#translationSelect"),
   bookSelect: document.querySelector("#bookSelect"),
   chapterSelect: document.querySelector("#chapterSelect"),
@@ -61,6 +97,33 @@ function selectedChapter() {
   return book.chapters.find((chapter) => chapter.chapter === state.selectedChapter) || book.chapters[0];
 }
 
+function activeMember() {
+  let member = state.members.find((item) => item.id === state.activeMemberId);
+  if (!member) {
+    member = state.members[0];
+    state.activeMemberId = member.id;
+  }
+  return member;
+}
+
+function persistMembers() {
+  const member = activeMember();
+  member.bookmarks = [...state.bookmarks];
+  localStorage.setItem(
+    memberStorageKey,
+    JSON.stringify({
+      activeMemberId: state.activeMemberId,
+      members: state.members,
+    }),
+  );
+  localStorage.setItem(legacyBookmarkKey, JSON.stringify(member.bookmarks));
+}
+
+function loadActiveMember() {
+  const member = activeMember();
+  state.bookmarks = new Set(member.bookmarks || []);
+}
+
 function allVerses() {
   const translation = selectedTranslation();
   return translation.books.flatMap((book) =>
@@ -77,6 +140,44 @@ function allVerses() {
 
 function bookmarkId(bookId, chapter, verse) {
   return `${bookId}-${chapter}-${verse}`;
+}
+
+function chapterProgressId(translationId, bookId, chapter) {
+  return `${translationId}:${bookId}:${chapter}`;
+}
+
+function totalChapterCount(translation = selectedTranslation()) {
+  return translation.books.reduce((total, book) => total + book.chapters.length, 0);
+}
+
+function readChapterCount(member = activeMember(), translation = selectedTranslation()) {
+  const prefix = `${translation.id}:`;
+  return new Set((member.readChapters || []).filter((id) => id.startsWith(prefix))).size;
+}
+
+function currentLocation() {
+  const translation = selectedTranslation();
+  const book = selectedBook();
+  const chapter = selectedChapter();
+  return {
+    translationId: translation.id,
+    translationName: translation.name,
+    bookId: book.id,
+    bookName: book.name,
+    chapter: chapter.chapter,
+  };
+}
+
+function markCurrentChapterRead() {
+  const member = activeMember();
+  const location = currentLocation();
+  const progressId = chapterProgressId(location.translationId, location.bookId, location.chapter);
+  member.readChapters = member.readChapters || [];
+  if (!member.readChapters.includes(progressId)) {
+    member.readChapters.push(progressId);
+  }
+  member.lastRead = location;
+  persistMembers();
 }
 
 function parseBookmarkId(id) {
@@ -107,8 +208,37 @@ function favoriteVerses() {
 }
 
 function saveBookmarks() {
-  localStorage.setItem("malsseumgilBookmarks", JSON.stringify([...state.bookmarks]));
+  persistMembers();
   els.bookmarkCount.textContent = state.bookmarks.size;
+}
+
+function addMember() {
+  const name = els.memberNameInput.value.trim();
+  if (!name) return;
+
+  const member = createMember(name);
+  state.members.push(member);
+  state.activeMemberId = member.id;
+  loadActiveMember();
+  els.memberNameInput.value = "";
+  state.showFavorites = false;
+  persistMembers();
+  render();
+}
+
+function switchMember(memberId) {
+  state.activeMemberId = memberId;
+  loadActiveMember();
+  state.showFavorites = false;
+  persistMembers();
+  render();
+}
+
+function renderMemberPanel() {
+  els.memberSelect.innerHTML = state.members
+    .map((member) => `<option value="${member.id}">${member.name}</option>`)
+    .join("");
+  els.memberSelect.value = state.activeMemberId;
 }
 
 function setTranslation(translationId) {
@@ -123,6 +253,7 @@ function setTranslation(translationId) {
   state.selectedChapter = nextChapter.chapter;
   state.activeTestament = nextBook.testament;
   els.searchInput.value = "";
+  state.showFavorites = false;
   render();
 }
 
@@ -162,6 +293,20 @@ function renderTranslationSelect() {
     .map((translation) => `<option value="${translation.id}">${translation.name}</option>`)
     .join("");
   els.translationSelect.value = state.selectedTranslationId;
+}
+
+function renderProgress() {
+  const member = activeMember();
+  const translation = selectedTranslation();
+  const readCount = readChapterCount(member, translation);
+  const totalCount = totalChapterCount(translation);
+  const percent = totalCount === 0 ? 0 : Math.round((readCount / totalCount) * 100);
+  els.progressPercent.textContent = `${percent}%`;
+  els.progressSummary.textContent = `읽은 장 ${readCount} / ${totalCount}`;
+  els.lastReadButton.disabled = !member.lastRead;
+  els.lastReadButton.textContent = member.lastRead
+    ? `${member.lastRead.bookName} ${member.lastRead.chapter}장`
+    : "최근 위치";
 }
 
 function renderBookSelect() {
@@ -212,6 +357,7 @@ function renderHeader() {
   els.bookmarkCount.textContent = state.bookmarks.size;
   els.favoritesToggle.classList.toggle("active", state.showFavorites);
   els.favoritesToggle.textContent = state.showFavorites ? "성경 본문 보기" : "즐겨찾기 보기";
+  renderProgress();
 }
 
 function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult }) {
@@ -297,6 +443,7 @@ function renderVerses() {
   }
 
   els.resultSummary.hidden = true;
+  markCurrentChapterRead();
   const book = selectedBook();
   const chapter = selectedChapter();
   const fragment = document.createDocumentFragment();
@@ -307,6 +454,7 @@ function renderVerses() {
 }
 
 function render() {
+  renderMemberPanel();
   renderTranslationSelect();
   renderBookSelect();
   renderChapterSelect();
@@ -317,6 +465,19 @@ function render() {
 }
 
 els.translationSelect.addEventListener("change", (event) => setTranslation(event.target.value));
+els.memberSelect.addEventListener("change", (event) => switchMember(event.target.value));
+els.addMemberButton.addEventListener("click", addMember);
+els.memberNameInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    addMember();
+  }
+});
+els.lastReadButton.addEventListener("click", () => {
+  const lastRead = activeMember().lastRead;
+  if (!lastRead) return;
+  setTranslation(lastRead.translationId);
+  setBook(lastRead.bookId, lastRead.chapter);
+});
 els.bookSelect.addEventListener("change", (event) => setBook(event.target.value));
 els.chapterSelect.addEventListener("change", (event) => setChapter(event.target.value));
 els.oldTab.addEventListener("click", () => {
@@ -359,5 +520,7 @@ els.favoritesToggle.addEventListener("click", () => {
   renderVerses();
 });
 
+loadActiveMember();
+persistMembers();
 render();
 saveBookmarks();

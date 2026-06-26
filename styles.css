@@ -106,7 +106,8 @@ body.dark .sidebar {
 }
 
 .search-box span,
-.selectors span {
+.selectors span,
+.member-panel span {
   color: var(--muted);
   font-size: 13px;
   font-weight: 800;
@@ -121,6 +122,63 @@ select {
   min-height: 46px;
   padding: 0 12px;
   width: 100%;
+}
+
+.member-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.member-panel label {
+  display: grid;
+  gap: 8px;
+}
+
+.member-add {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 62px;
+}
+
+.member-add button,
+.progress-card button {
+  background: var(--green-soft);
+  border: 0;
+  border-radius: 8px;
+  color: var(--green);
+  font-weight: 900;
+}
+
+.progress-card button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.progress-card {
+  align-items: center;
+  background: var(--green-soft);
+  border-radius: 8px;
+  color: var(--green);
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) 82px;
+  padding: 10px;
+}
+
+.progress-card strong {
+  display: block;
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.progress-card span {
+  color: var(--green);
+  display: block;
+  margin-top: 3px;
 }
 
 .toolbar {
