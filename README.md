@@ -1,6 +1,6 @@
 # 말씀길
 
-개역한글 성경 읽기, 전체 본문 검색, 북마크, 글자 크기 조절을 제공하는 Expo 기반 Android 앱입니다.
+여러 성경 번역본 읽기, 전체 본문 검색, 북마크, 글자 크기 조절을 제공하는 Expo 기반 Android 앱입니다.
 
 ## 실행
 
@@ -26,7 +26,7 @@ malsseumgil-web-bible.html
 open-web.bat
 ```
 
-웹 페이지에서도 66권 전체 읽기, 장 선택, 전체 검색, 북마크, 글자 크기 조절, 다크 모드를 사용할 수 있습니다.
+웹 페이지에서도 번역본 선택, 66권 전체 읽기, 장 선택, 전체 검색, 북마크, 글자 크기 조절, 다크 모드를 사용할 수 있습니다.
 
 ## GitHub Pages로 인터넷 공개
 
@@ -50,13 +50,14 @@ git push -u origin main
 
 ## 성경 데이터
 
-- `src/data/krv.json`에 전체 개역한글 66권, 31,106절이 들어 있습니다.
-- `web/krv-data.js`는 웹 페이지가 바로 읽을 수 있게 같은 데이터를 변환한 파일입니다.
+- `src/data/bibles.json`에 개역한글, 개역개정, 공동번역, 현대어성경, NIV가 들어 있습니다.
+- `web/bibles-data.js`는 웹 페이지가 바로 읽을 수 있게 같은 데이터를 변환한 파일입니다.
+- 기존 `src/data/krv.json`은 개역한글 단일 데이터 보관용입니다.
 - 원본 SQLite 파일은 `source-data/krv.sqlite`에 복사해 변환했고, 이 원본 폴더는 Git 추적에서 제외됩니다.
 - 원본을 다시 바꾼 경우 아래 명령으로 앱용 JSON을 재생성할 수 있습니다.
 
 ```bash
-python scripts/convert-krv.py
+python scripts/convert-bibles.py
 ```
 
 ## 배포 전 확인할 것

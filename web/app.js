@@ -1,7 +1,7 @@
-const bibleData = window.KRV_DATA;
+const bibleBundle = window.BIBLE_TRANSLATIONS;
 const searchLimit = 300;
 
-if (!bibleData?.books?.length) {
+if (!bibleBundle?.translations?.length) {
   const verseList = document.querySelector("#verseList");
   const readerTitle = document.querySelector("#readerTitle");
   if (readerTitle) {
@@ -9,14 +9,15 @@ if (!bibleData?.books?.length) {
   }
   if (verseList) {
     verseList.innerHTML =
-      '<p class="empty">web 폴더 안의 index.html, app.js, styles.css, krv-data.js 파일이 함께 있어야 합니다. bible-app 폴더의 open-web.bat 파일로 다시 열어보세요.</p>';
+      '<p class="empty">web 폴더 안의 index.html, app.js, styles.css, bibles-data.js 파일이 함께 있어야 합니다.</p>';
   }
-  throw new Error("KRV_DATA is missing. Open web/index.html with krv-data.js in the same folder.");
+  throw new Error("BIBLE_TRANSLATIONS is missing.");
 }
 
 const state = {
   activeTestament: "old",
-  selectedBookId: bibleData.books[0].id,
+  selectedTranslationId: bibleBundle.defaultTranslationId,
+  selectedBookId: bibleBundle.translations[0].books[0].id,
   selectedChapter: 1,
   fontSize: 20,
   bookmarks: new Set(JSON.parse(localStorage.getItem("malsseumgilBookmarks") || "[]")),
@@ -24,6 +25,7 @@ const state = {
 
 const els = {
   searchInput: document.querySelector("#searchInput"),
+  translationSelect: document.querySelector("#translationSelect"),
   bookSelect: document.querySelector("#bookSelect"),
   chapterSelect: document.querySelector("#chapterSelect"),
   bookList: document.querySelector("#bookList"),
@@ -40,24 +42,35 @@ const els = {
   themeToggle: document.querySelector("#themeToggle"),
 };
 
-const allVerses = bibleData.books.flatMap((book) =>
-  book.chapters.flatMap((chapter) =>
-    chapter.verses.map((verse) => ({
-      ...verse,
-      bookId: book.id,
-      bookName: book.name,
-      chapter: chapter.chapter,
-    })),
-  ),
-);
+function selectedTranslation() {
+  return (
+    bibleBundle.translations.find((translation) => translation.id === state.selectedTranslationId) ||
+    bibleBundle.translations[0]
+  );
+}
 
 function selectedBook() {
-  return bibleData.books.find((book) => book.id === state.selectedBookId) || bibleData.books[0];
+  const translation = selectedTranslation();
+  return translation.books.find((book) => book.id === state.selectedBookId) || translation.books[0];
 }
 
 function selectedChapter() {
   const book = selectedBook();
   return book.chapters.find((chapter) => chapter.chapter === state.selectedChapter) || book.chapters[0];
+}
+
+function allVerses() {
+  const translation = selectedTranslation();
+  return translation.books.flatMap((book) =>
+    book.chapters.flatMap((chapter) =>
+      chapter.verses.map((verse) => ({
+        ...verse,
+        bookId: book.id,
+        bookName: book.name,
+        chapter: chapter.chapter,
+      })),
+    ),
+  );
 }
 
 function bookmarkId(bookId, chapter, verse) {
@@ -69,8 +82,24 @@ function saveBookmarks() {
   els.bookmarkCount.textContent = state.bookmarks.size;
 }
 
+function setTranslation(translationId) {
+  const nextTranslation =
+    bibleBundle.translations.find((translation) => translation.id === translationId) || selectedTranslation();
+  const nextBook = nextTranslation.books.find((book) => book.id === state.selectedBookId) || nextTranslation.books[0];
+  const nextChapter =
+    nextBook.chapters.find((chapter) => chapter.chapter === state.selectedChapter) || nextBook.chapters[0];
+
+  state.selectedTranslationId = nextTranslation.id;
+  state.selectedBookId = nextBook.id;
+  state.selectedChapter = nextChapter.chapter;
+  state.activeTestament = nextBook.testament;
+  els.searchInput.value = "";
+  render();
+}
+
 function setBook(bookId, chapter = 1) {
-  const book = bibleData.books.find((item) => item.id === bookId);
+  const translation = selectedTranslation();
+  const book = translation.books.find((item) => item.id === bookId);
   if (!book) return;
 
   state.selectedBookId = book.id;
@@ -97,8 +126,16 @@ function toggleBookmark(bookId, chapter, verse) {
   renderVerses();
 }
 
+function renderTranslationSelect() {
+  els.translationSelect.innerHTML = bibleBundle.translations
+    .map((translation) => `<option value="${translation.id}">${translation.name}</option>`)
+    .join("");
+  els.translationSelect.value = state.selectedTranslationId;
+}
+
 function renderBookSelect() {
-  els.bookSelect.innerHTML = bibleData.books
+  const translation = selectedTranslation();
+  els.bookSelect.innerHTML = translation.books
     .map((book) => `<option value="${book.id}">${book.name}</option>`)
     .join("");
   els.bookSelect.value = state.selectedBookId;
@@ -118,7 +155,8 @@ function renderTabs() {
 }
 
 function renderBookButtons() {
-  const books = bibleData.books.filter((book) => book.testament === state.activeTestament);
+  const translation = selectedTranslation();
+  const books = translation.books.filter((book) => book.testament === state.activeTestament);
   els.bookList.innerHTML = books
     .map(
       (book) =>
@@ -128,10 +166,11 @@ function renderBookButtons() {
 }
 
 function renderHeader() {
+  const translation = selectedTranslation();
   const book = selectedBook();
   const chapter = selectedChapter();
   const searching = els.searchInput.value.trim().length > 0;
-  els.readerMeta.textContent = bibleData.translation;
+  els.readerMeta.textContent = `${translation.name} · ${translation.verseCount.toLocaleString()}절`;
   els.readerTitle.textContent = searching ? "검색 결과" : `${book.name} ${chapter.chapter}장`;
   document.documentElement.style.setProperty("--reader-font-size", `${state.fontSize}px`);
   els.fontSizeLabel.textContent = state.fontSize;
@@ -168,10 +207,11 @@ function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult }
 
 function renderVerses() {
   const query = els.searchInput.value.trim();
+  const lowerQuery = query.toLowerCase();
   els.verseList.innerHTML = "";
 
   if (query) {
-    const matches = allVerses.filter((verse) => verse.text.includes(query));
+    const matches = allVerses().filter((verse) => verse.text.toLowerCase().includes(lowerQuery));
     const visibleMatches = matches.slice(0, searchLimit);
     els.resultSummary.hidden = false;
     els.resultSummary.textContent = `${matches.length}개 중 ${visibleMatches.length}개 표시`;
@@ -206,6 +246,7 @@ function renderVerses() {
 }
 
 function render() {
+  renderTranslationSelect();
   renderBookSelect();
   renderChapterSelect();
   renderTabs();
@@ -214,6 +255,7 @@ function render() {
   renderVerses();
 }
 
+els.translationSelect.addEventListener("change", (event) => setTranslation(event.target.value));
 els.bookSelect.addEventListener("change", (event) => setBook(event.target.value));
 els.chapterSelect.addEventListener("change", (event) => setChapter(event.target.value));
 els.oldTab.addEventListener("click", () => {

@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 
-import bibleData from './src/data/krv.json';
+import bibleBundle from './src/data/bibles.json';
 
 type Testament = 'old' | 'new';
 
@@ -32,9 +32,17 @@ type BibleBook = {
   chapters: BibleChapter[];
 };
 
-type BibleData = {
-  translation: string;
+type BibleTranslation = {
+  id: string;
+  name: string;
+  language: string;
+  verseCount: number;
   books: BibleBook[];
+};
+
+type BibleBundle = {
+  defaultTranslationId: string;
+  translations: BibleTranslation[];
 };
 
 type SearchResult = BibleVerse & {
@@ -43,7 +51,7 @@ type SearchResult = BibleVerse & {
   chapter: number;
 };
 
-const BIBLE_DATA = bibleData as BibleData;
+const BIBLE_BUNDLE = bibleBundle as BibleBundle;
 const SEARCH_RESULT_LIMIT = 200;
 
 const testamentLabel: Record<Testament, string> = {
@@ -52,14 +60,21 @@ const testamentLabel: Record<Testament, string> = {
 };
 
 export default function App() {
-  const [selectedBookId, setSelectedBookId] = useState(BIBLE_DATA.books[0].id);
+  const [selectedTranslationId, setSelectedTranslationId] = useState(
+    BIBLE_BUNDLE.defaultTranslationId,
+  );
+  const [selectedBookId, setSelectedBookId] = useState(BIBLE_BUNDLE.translations[0].books[0].id);
   const [selectedChapterNumber, setSelectedChapterNumber] = useState(1);
   const [query, setQuery] = useState('');
   const [fontSize, setFontSize] = useState(20);
   const [bookmarks, setBookmarks] = useState<string[]>([]);
 
+  const selectedTranslation =
+    BIBLE_BUNDLE.translations.find((translation) => translation.id === selectedTranslationId) ??
+    BIBLE_BUNDLE.translations[0];
   const selectedBook =
-    BIBLE_DATA.books.find((book) => book.id === selectedBookId) ?? BIBLE_DATA.books[0];
+    selectedTranslation.books.find((book) => book.id === selectedBookId) ??
+    selectedTranslation.books[0];
   const selectedChapter =
     selectedBook.chapters.find((chapter) => chapter.chapter === selectedChapterNumber) ??
     selectedBook.chapters[0];
@@ -67,7 +82,7 @@ export default function App() {
 
   const allVerses = useMemo<SearchResult[]>(
     () =>
-      BIBLE_DATA.books.flatMap((book) =>
+      selectedTranslation.books.flatMap((book) =>
         book.chapters.flatMap((chapter) =>
           chapter.verses.map((verse) => ({
             ...verse,
@@ -77,7 +92,7 @@ export default function App() {
           })),
         ),
       ),
-    [],
+    [selectedTranslation],
   );
 
   const searchResults = useMemo(() => {
@@ -86,7 +101,7 @@ export default function App() {
     }
 
     return allVerses
-      .filter((verse) => verse.text.includes(normalizedQuery))
+      .filter((verse) => verse.text.toLowerCase().includes(normalizedQuery.toLowerCase()))
       .slice(0, SEARCH_RESULT_LIMIT);
   }, [allVerses, normalizedQuery]);
 
@@ -95,8 +110,26 @@ export default function App() {
       return 0;
     }
 
-    return allVerses.filter((verse) => verse.text.includes(normalizedQuery)).length;
+    return allVerses.filter((verse) =>
+      verse.text.toLowerCase().includes(normalizedQuery.toLowerCase()),
+    ).length;
   }, [allVerses, normalizedQuery]);
+
+  const selectTranslation = (translationId: string) => {
+    const nextTranslation =
+      BIBLE_BUNDLE.translations.find((translation) => translation.id === translationId) ??
+      selectedTranslation;
+    const nextBook =
+      nextTranslation.books.find((book) => book.id === selectedBookId) ?? nextTranslation.books[0];
+    const nextChapter =
+      nextBook.chapters.find((chapter) => chapter.chapter === selectedChapterNumber) ??
+      nextBook.chapters[0];
+
+    setSelectedTranslationId(nextTranslation.id);
+    setSelectedBookId(nextBook.id);
+    setSelectedChapterNumber(nextChapter.chapter);
+    setQuery('');
+  };
 
   const toggleBookmark = (bookId: string, chapter: number, verse: number) => {
     const bookmarkId = `${bookId}-${chapter}-${verse}`;
@@ -125,7 +158,7 @@ export default function App() {
 
     return (
       <Pressable
-        key={bookmarkId}
+        key={`${selectedTranslation.id}-${bookmarkId}`}
         onPress={onPress ?? (() => toggleBookmark(bookId, chapter, verse.verse))}
         style={[styles.verseRow, isBookmarked && styles.verseRowMarked]}
       >
@@ -152,7 +185,7 @@ export default function App() {
       <View style={styles.header}>
         <View style={styles.titleBlock}>
           <Text style={styles.appName}>성경을 읽다</Text>
-          <Text style={styles.subtitle}>개역한글 전체 성경</Text>
+          <Text style={styles.subtitle}>여러 번역본으로 읽고 검색하기</Text>
         </View>
         <View style={styles.counter}>
           <Text style={styles.counterNumber}>{bookmarks.length}</Text>
@@ -160,9 +193,35 @@ export default function App() {
         </View>
       </View>
 
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.translationStrip}
+      >
+        {BIBLE_BUNDLE.translations.map((translation) => {
+          const isSelected = translation.id === selectedTranslation.id;
+          return (
+            <Pressable
+              key={translation.id}
+              onPress={() => selectTranslation(translation.id)}
+              style={[styles.translationButton, isSelected && styles.translationButtonSelected]}
+            >
+              <Text
+                style={[
+                  styles.translationButtonText,
+                  isSelected && styles.translationButtonTextSelected,
+                ]}
+              >
+                {translation.name}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
       <View style={styles.searchPanel}>
         <TextInput
-          placeholder="전체 성경 검색"
+          placeholder={`${selectedTranslation.name} 검색`}
           placeholderTextColor="#7d8378"
           value={query}
           onChangeText={setQuery}
@@ -188,7 +247,7 @@ export default function App() {
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.bookStrip}>
-        {BIBLE_DATA.books.map((book) => {
+        {selectedTranslation.books.map((book) => {
           const isSelected = book.id === selectedBook.id;
           return (
             <Pressable
@@ -234,7 +293,9 @@ export default function App() {
       </ScrollView>
 
       <ScrollView contentContainerStyle={styles.reader}>
-        <Text style={styles.translationLabel}>{BIBLE_DATA.translation}</Text>
+        <Text style={styles.translationLabel}>
+          {selectedTranslation.name} · {selectedTranslation.verseCount.toLocaleString()}절
+        </Text>
         {normalizedQuery ? (
           <>
             <Text style={styles.chapterTitle}>검색 결과</Text>
@@ -284,7 +345,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 18,
-    paddingBottom: 14,
+    paddingBottom: 12,
   },
   titleBlock: {
     flex: 1,
@@ -316,6 +377,29 @@ const styles = StyleSheet.create({
   counterLabel: {
     color: '#d6e7db',
     fontSize: 12,
+  },
+  translationStrip: {
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+  },
+  translationButton: {
+    backgroundColor: '#ebe4d8',
+    borderRadius: 8,
+    minHeight: 40,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+  translationButtonSelected: {
+    backgroundColor: '#24463d',
+  },
+  translationButtonText: {
+    color: '#27322d',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  translationButtonTextSelected: {
+    color: '#fffdf7',
   },
   searchPanel: {
     alignItems: 'center',
