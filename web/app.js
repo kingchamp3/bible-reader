@@ -20,6 +20,7 @@ const state = {
   selectedBookId: bibleBundle.translations[0].books[0].id,
   selectedChapter: 1,
   fontSize: 20,
+  showFavorites: false,
   bookmarks: new Set(JSON.parse(localStorage.getItem("malsseumgilBookmarks") || "[]")),
 };
 
@@ -40,6 +41,7 @@ const els = {
   increaseFont: document.querySelector("#increaseFont"),
   fontSizeLabel: document.querySelector("#fontSizeLabel"),
   themeToggle: document.querySelector("#themeToggle"),
+  favoritesToggle: document.querySelector("#favoritesToggle"),
 };
 
 function selectedTranslation() {
@@ -77,6 +79,33 @@ function bookmarkId(bookId, chapter, verse) {
   return `${bookId}-${chapter}-${verse}`;
 }
 
+function parseBookmarkId(id) {
+  const parts = id.split("-");
+  const verse = Number(parts.pop());
+  const chapter = Number(parts.pop());
+  const bookId = parts.join("-");
+  return { bookId, chapter, verse };
+}
+
+function favoriteVerses() {
+  const translation = selectedTranslation();
+  return [...state.bookmarks]
+    .map((id) => {
+      const parsed = parseBookmarkId(id);
+      const book = translation.books.find((item) => item.id === parsed.bookId);
+      const chapter = book?.chapters.find((item) => item.chapter === parsed.chapter);
+      const verse = chapter?.verses.find((item) => item.verse === parsed.verse);
+      if (!book || !chapter || !verse) return null;
+      return {
+        ...verse,
+        bookId: book.id,
+        bookName: book.name,
+        chapter: chapter.chapter,
+      };
+    })
+    .filter(Boolean);
+}
+
 function saveBookmarks() {
   localStorage.setItem("malsseumgilBookmarks", JSON.stringify([...state.bookmarks]));
   els.bookmarkCount.textContent = state.bookmarks.size;
@@ -106,12 +135,14 @@ function setBook(bookId, chapter = 1) {
   state.selectedChapter = chapter;
   state.activeTestament = book.testament;
   els.searchInput.value = "";
+  state.showFavorites = false;
   render();
 }
 
 function setChapter(chapter) {
   state.selectedChapter = Number(chapter);
   els.searchInput.value = "";
+  state.showFavorites = false;
   render();
 }
 
@@ -171,10 +202,16 @@ function renderHeader() {
   const chapter = selectedChapter();
   const searching = els.searchInput.value.trim().length > 0;
   els.readerMeta.textContent = `${translation.name} · ${translation.verseCount.toLocaleString()}절`;
-  els.readerTitle.textContent = searching ? "검색 결과" : `${book.name} ${chapter.chapter}장`;
+  els.readerTitle.textContent = state.showFavorites
+    ? "즐겨찾기"
+    : searching
+      ? "검색 결과"
+      : `${book.name} ${chapter.chapter}장`;
   document.documentElement.style.setProperty("--reader-font-size", `${state.fontSize}px`);
   els.fontSizeLabel.textContent = state.fontSize;
   els.bookmarkCount.textContent = state.bookmarks.size;
+  els.favoritesToggle.classList.toggle("active", state.showFavorites);
+  els.favoritesToggle.textContent = state.showFavorites ? "성경 본문 보기" : "즐겨찾기 보기";
 }
 
 function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult }) {
@@ -209,6 +246,30 @@ function renderVerses() {
   const query = els.searchInput.value.trim();
   const lowerQuery = query.toLowerCase();
   els.verseList.innerHTML = "";
+
+  if (state.showFavorites) {
+    els.resultSummary.hidden = false;
+    const favorites = favoriteVerses();
+    els.resultSummary.textContent = `${favorites.length}개 즐겨찾기`;
+
+    if (favorites.length === 0) {
+      els.verseList.innerHTML = '<p class="empty">저장한 구절이 없습니다.</p>';
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    favorites.forEach((verse) => {
+      fragment.append(
+        createVerseRow({
+          ...verse,
+          refLabel: `${verse.bookName} ${verse.chapter}:${verse.verse}`,
+          searchResult: true,
+        }),
+      );
+    });
+    els.verseList.append(fragment);
+    return;
+  }
 
   if (query) {
     const matches = allVerses().filter((verse) => verse.text.toLowerCase().includes(lowerQuery));
@@ -275,6 +336,7 @@ els.bookList.addEventListener("click", (event) => {
   }
 });
 els.searchInput.addEventListener("input", () => {
+  state.showFavorites = false;
   renderHeader();
   renderVerses();
 });
@@ -289,6 +351,12 @@ els.increaseFont.addEventListener("click", () => {
 els.themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("dark");
   els.themeToggle.textContent = document.body.classList.contains("dark") ? "밝게" : "어둡게";
+});
+els.favoritesToggle.addEventListener("click", () => {
+  state.showFavorites = !state.showFavorites;
+  els.searchInput.value = "";
+  renderHeader();
+  renderVerses();
 });
 
 render();

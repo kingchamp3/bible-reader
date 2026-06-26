@@ -145,6 +145,20 @@ select {
   height: 42px;
 }
 
+.favorite-actions button {
+  background: var(--green);
+  border: 0;
+  border-radius: 8px;
+  color: var(--panel);
+  font-weight: 900;
+  min-height: 44px;
+  width: 100%;
+}
+
+.favorite-actions button.active {
+  background: var(--gold);
+}
+
 #fontSizeLabel {
   color: var(--muted);
   font-size: 14px;

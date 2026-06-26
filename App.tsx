@@ -67,6 +67,7 @@ export default function App() {
   const [selectedChapterNumber, setSelectedChapterNumber] = useState(1);
   const [query, setQuery] = useState('');
   const [fontSize, setFontSize] = useState(20);
+  const [showFavorites, setShowFavorites] = useState(false);
   const [bookmarks, setBookmarks] = useState<string[]>([]);
 
   const selectedTranslation =
@@ -115,6 +116,31 @@ export default function App() {
     ).length;
   }, [allVerses, normalizedQuery]);
 
+  const favoriteResults = useMemo<SearchResult[]>(() => {
+    return bookmarks
+      .map((bookmarkId) => {
+        const parts = bookmarkId.split('-');
+        const verse = Number(parts.pop());
+        const chapter = Number(parts.pop());
+        const bookId = parts.join('-');
+        const book = selectedTranslation.books.find((item) => item.id === bookId);
+        const selectedFavoriteChapter = book?.chapters.find((item) => item.chapter === chapter);
+        const favoriteVerse = selectedFavoriteChapter?.verses.find((item) => item.verse === verse);
+
+        if (!book || !selectedFavoriteChapter || !favoriteVerse) {
+          return null;
+        }
+
+        return {
+          ...favoriteVerse,
+          bookId: book.id,
+          bookName: book.name,
+          chapter: selectedFavoriteChapter.chapter,
+        };
+      })
+      .filter((verse): verse is SearchResult => Boolean(verse));
+  }, [bookmarks, selectedTranslation]);
+
   const selectTranslation = (translationId: string) => {
     const nextTranslation =
       BIBLE_BUNDLE.translations.find((translation) => translation.id === translationId) ??
@@ -144,6 +170,7 @@ export default function App() {
     setSelectedBookId(result.bookId);
     setSelectedChapterNumber(result.chapter);
     setQuery('');
+    setShowFavorites(false);
   };
 
   const renderVerse = (
@@ -189,7 +216,7 @@ export default function App() {
         </View>
         <View style={styles.counter}>
           <Text style={styles.counterNumber}>{bookmarks.length}</Text>
-          <Text style={styles.counterLabel}>표시</Text>
+          <Text style={styles.counterLabel}>즐겨찾기</Text>
         </View>
       </View>
 
@@ -227,6 +254,18 @@ export default function App() {
           onChangeText={setQuery}
           style={styles.searchInput}
         />
+        <Pressable
+          accessibilityLabel="즐겨찾기 보기"
+          onPress={() => {
+            setShowFavorites((current) => !current);
+            setQuery('');
+          }}
+          style={[styles.favoriteToggle, showFavorites && styles.favoriteToggleActive]}
+        >
+          <Text style={[styles.favoriteToggleText, showFavorites && styles.favoriteToggleTextActive]}>
+            {showFavorites ? '본문' : '즐겨찾기'}
+          </Text>
+        </Pressable>
         <View style={styles.fontControls}>
           <Pressable
             accessibilityLabel="글자 작게"
@@ -256,6 +295,7 @@ export default function App() {
                 setSelectedBookId(book.id);
                 setSelectedChapterNumber(book.chapters[0].chapter);
                 setQuery('');
+                setShowFavorites(false);
               }}
               style={[styles.bookButton, isSelected && styles.bookButtonSelected]}
             >
@@ -281,6 +321,7 @@ export default function App() {
               onPress={() => {
                 setSelectedChapterNumber(chapter.chapter);
                 setQuery('');
+                setShowFavorites(false);
               }}
               style={[styles.chapterButton, isSelected && styles.chapterButtonSelected]}
             >
@@ -296,7 +337,28 @@ export default function App() {
         <Text style={styles.translationLabel}>
           {selectedTranslation.name} · {selectedTranslation.verseCount.toLocaleString()}절
         </Text>
-        {normalizedQuery ? (
+        {showFavorites ? (
+          <>
+            <Text style={styles.chapterTitle}>즐겨찾기</Text>
+            <Text style={styles.resultSummary}>{favoriteResults.length}개 즐겨찾기</Text>
+            {favoriteResults.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyTitle}>저장한 구절이 없습니다</Text>
+                <Text style={styles.emptyText}>구절의 저장 버튼을 눌러 즐겨찾기에 추가하세요.</Text>
+              </View>
+            ) : (
+              favoriteResults.map((result) =>
+                renderVerse(
+                  result,
+                  result.bookId,
+                  result.chapter,
+                  `${result.bookName} ${result.chapter}:${result.verse}`,
+                  () => moveToVerse(result),
+                ),
+              )
+            )}
+          </>
+        ) : normalizedQuery ? (
           <>
             <Text style={styles.chapterTitle}>검색 결과</Text>
             <Text style={styles.resultSummary}>
@@ -418,6 +480,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     minHeight: 48,
     paddingHorizontal: 14,
+  },
+  favoriteToggle: {
+    alignItems: 'center',
+    backgroundColor: '#ebe4d8',
+    borderRadius: 8,
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: 12,
+  },
+  favoriteToggleActive: {
+    backgroundColor: '#92784d',
+  },
+  favoriteToggleText: {
+    color: '#27322d',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  favoriteToggleTextActive: {
+    color: '#fffdf7',
   },
   fontControls: {
     alignItems: 'center',
