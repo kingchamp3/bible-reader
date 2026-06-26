@@ -15,6 +15,24 @@
           <p>전체 성경을 읽고 검색하는 조용한 웹 성경</p>
         </section>
 
+        <section class="member-panel" aria-label="회원 관리">
+          <label>
+            <span>회원</span>
+            <select id="memberSelect"></select>
+          </label>
+          <div class="member-add">
+            <input id="memberNameInput" type="text" placeholder="새 회원 이름" autocomplete="off" />
+            <button id="addMemberButton" type="button">추가</button>
+          </div>
+          <div class="progress-card">
+            <div>
+              <strong id="progressPercent">0%</strong>
+              <span id="progressSummary">읽은 장 0 / 0</span>
+            </div>
+            <button id="lastReadButton" type="button">최근 위치</button>
+          </div>
+        </section>
+
         <label class="search-box">
           <span>전체 검색</span>
           <input id="searchInput" type="search" placeholder="예: 사랑, 믿음, 창조" autocomplete="off" />
