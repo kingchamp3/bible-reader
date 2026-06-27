@@ -17,7 +17,11 @@ window.BIBLE_READER_AUTH = {
   },
 };
 
-if (hasFirebaseConfig) {
+window.BIBLE_READER_AUTH_READY = (async () => {
+  if (!hasFirebaseConfig) {
+    return window.BIBLE_READER_AUTH;
+  }
+
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js");
   const {
     GoogleAuthProvider,
@@ -75,4 +79,6 @@ if (hasFirebaseConfig) {
       });
     },
   };
-}
+
+  return window.BIBLE_READER_AUTH;
+})();
