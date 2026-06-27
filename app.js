@@ -2,6 +2,7 @@ const bibleBundle = window.BIBLE_TRANSLATIONS;
 const searchLimit = 300;
 const memberStorageKey = "bibleReaderMembers";
 const legacyBookmarkKey = "malsseumgilBookmarks";
+await window.BIBLE_READER_AUTH_READY;
 const authService = window.BIBLE_READER_AUTH;
 let cloudSaveTimer = null;
 
