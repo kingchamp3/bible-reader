@@ -48,10 +48,14 @@ const memberState = loadMemberState();
 const state = {
   activeTestament: "old",
   selectedTranslationId: bibleBundle.defaultTranslationId,
+  compareTranslationId:
+    bibleBundle.translations.find((translation) => translation.id !== bibleBundle.defaultTranslationId)?.id ||
+    bibleBundle.defaultTranslationId,
   selectedBookId: bibleBundle.translations[0].books[0].id,
   selectedChapter: 1,
   fontSize: 20,
   showFavorites: false,
+  compareMode: false,
   members: memberState.members,
   activeMemberId: memberState.activeMemberId,
   signedInUser: null,
@@ -70,6 +74,7 @@ const els = {
   progressSummary: document.querySelector("#progressSummary"),
   lastReadButton: document.querySelector("#lastReadButton"),
   translationSelect: document.querySelector("#translationSelect"),
+  compareTranslationSelect: document.querySelector("#compareTranslationSelect"),
   bookSelect: document.querySelector("#bookSelect"),
   chapterSelect: document.querySelector("#chapterSelect"),
   bookList: document.querySelector("#bookList"),
@@ -85,12 +90,31 @@ const els = {
   fontSizeLabel: document.querySelector("#fontSizeLabel"),
   themeToggle: document.querySelector("#themeToggle"),
   favoritesToggle: document.querySelector("#favoritesToggle"),
+  compareToggle: document.querySelector("#compareToggle"),
 };
 
 function selectedTranslation() {
   return (
     bibleBundle.translations.find((translation) => translation.id === state.selectedTranslationId) ||
     bibleBundle.translations[0]
+  );
+}
+
+function fallbackCompareTranslationId() {
+  return (
+    bibleBundle.translations.find((translation) => translation.id !== state.selectedTranslationId)?.id ||
+    state.selectedTranslationId
+  );
+}
+
+function selectedCompareTranslation() {
+  if (state.compareTranslationId === state.selectedTranslationId) {
+    state.compareTranslationId = fallbackCompareTranslationId();
+  }
+  return (
+    bibleBundle.translations.find((translation) => translation.id === state.compareTranslationId) ||
+    bibleBundle.translations.find((translation) => translation.id !== state.selectedTranslationId) ||
+    selectedTranslation()
   );
 }
 
@@ -291,6 +315,9 @@ function setTranslation(translationId) {
     nextBook.chapters.find((chapter) => chapter.chapter === state.selectedChapter) || nextBook.chapters[0];
 
   state.selectedTranslationId = nextTranslation.id;
+  if (state.compareTranslationId === nextTranslation.id) {
+    state.compareTranslationId = fallbackCompareTranslationId();
+  }
   state.selectedBookId = nextBook.id;
   state.selectedChapter = nextChapter.chapter;
   state.activeTestament = nextBook.testament;
@@ -335,6 +362,15 @@ function renderTranslationSelect() {
     .map((translation) => `<option value="${translation.id}">${translation.name}</option>`)
     .join("");
   els.translationSelect.value = state.selectedTranslationId;
+}
+
+function renderCompareTranslationSelect() {
+  selectedCompareTranslation();
+  els.compareTranslationSelect.innerHTML = bibleBundle.translations
+    .map((translation) => `<option value="${translation.id}">${translation.name}</option>`)
+    .join("");
+  els.compareTranslationSelect.value = state.compareTranslationId;
+  els.compareTranslationSelect.disabled = bibleBundle.translations.length < 2;
 }
 
 function renderProgress() {
@@ -385,20 +421,28 @@ function renderBookButtons() {
 
 function renderHeader() {
   const translation = selectedTranslation();
+  const compareTranslation = selectedCompareTranslation();
   const book = selectedBook();
   const chapter = selectedChapter();
   const searching = els.searchInput.value.trim().length > 0;
-  els.readerMeta.textContent = `${translation.name} · ${translation.verseCount.toLocaleString()}절`;
+  const comparing = state.compareMode && !state.showFavorites && !searching;
+  els.readerMeta.textContent = comparing
+    ? `${translation.name} ↔ ${compareTranslation.name}`
+    : `${translation.name} · ${translation.verseCount.toLocaleString()}절`;
   els.readerTitle.textContent = state.showFavorites
     ? "즐겨찾기"
     : searching
       ? "검색 결과"
-      : `${book.name} ${chapter.chapter}장`;
+      : comparing
+        ? `${book.name} ${chapter.chapter}장 대조`
+        : `${book.name} ${chapter.chapter}장`;
   document.documentElement.style.setProperty("--reader-font-size", `${state.fontSize}px`);
   els.fontSizeLabel.textContent = state.fontSize;
   els.bookmarkCount.textContent = state.bookmarks.size;
   els.favoritesToggle.classList.toggle("active", state.showFavorites);
   els.favoritesToggle.textContent = state.showFavorites ? "성경 본문 보기" : "즐겨찾기 보기";
+  els.compareToggle.classList.toggle("active", state.compareMode);
+  els.compareToggle.textContent = state.compareMode ? "대조 끄기" : "대조 보기";
   renderAuthPanel();
   renderProgress();
 }
@@ -427,6 +471,57 @@ function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult }
   save.textContent = marked ? "저장됨" : "저장";
   save.addEventListener("click", () => toggleBookmark(bookId, chapter, verse));
 
+  row.append(ref, body, save);
+  return row;
+}
+
+function findCompareVerse(bookId, chapterNumber, verseNumber) {
+  const compareTranslation = selectedCompareTranslation();
+  const book = compareTranslation.books.find((item) => item.id === bookId);
+  const chapter = book?.chapters.find((item) => item.chapter === chapterNumber);
+  return chapter?.verses.find((item) => item.verse === verseNumber);
+}
+
+function createCompareVerseRow({ bookId, chapter, verse, text }) {
+  const id = bookmarkId(bookId, chapter, verse);
+  const marked = state.bookmarks.has(id);
+  const translation = selectedTranslation();
+  const compareTranslation = selectedCompareTranslation();
+  const compareVerse = findCompareVerse(bookId, chapter, verse);
+  const row = document.createElement("section");
+  row.className = `verse-row compare-row${marked ? " marked" : ""}`;
+
+  const ref = document.createElement("button");
+  ref.type = "button";
+  ref.className = "verse-ref verse-save";
+  ref.textContent = verse;
+
+  const body = document.createElement("div");
+  body.className = "compare-grid";
+
+  const basePane = document.createElement("div");
+  basePane.className = "compare-pane";
+  const baseLabel = document.createElement("strong");
+  baseLabel.textContent = translation.name;
+  const baseText = document.createElement("p");
+  baseText.textContent = text;
+  basePane.append(baseLabel, baseText);
+
+  const comparePane = document.createElement("div");
+  comparePane.className = "compare-pane";
+  const compareLabel = document.createElement("strong");
+  compareLabel.textContent = compareTranslation.name;
+  const compareText = document.createElement("p");
+  compareText.textContent = compareVerse?.text || "해당 절 없음";
+  comparePane.append(compareLabel, compareText);
+
+  const save = document.createElement("button");
+  save.type = "button";
+  save.className = `verse-save${marked ? " saved" : ""}`;
+  save.textContent = marked ? "저장됨" : "저장";
+  save.addEventListener("click", () => toggleBookmark(bookId, chapter, verse));
+
+  body.append(basePane, comparePane);
   row.append(ref, body, save);
   return row;
 }
@@ -490,6 +585,14 @@ function renderVerses() {
   const book = selectedBook();
   const chapter = selectedChapter();
   const fragment = document.createDocumentFragment();
+  if (state.compareMode) {
+    chapter.verses.forEach((verse) => {
+      fragment.append(createCompareVerseRow({ ...verse, bookId: book.id, chapter: chapter.chapter }));
+    });
+    els.verseList.append(fragment);
+    return;
+  }
+
   chapter.verses.forEach((verse) => {
     fragment.append(createVerseRow({ ...verse, bookId: book.id, chapter: chapter.chapter }));
   });
@@ -499,6 +602,7 @@ function renderVerses() {
 function render() {
   renderMemberPanel();
   renderTranslationSelect();
+  renderCompareTranslationSelect();
   renderBookSelect();
   renderChapterSelect();
   renderTabs();
@@ -508,6 +612,15 @@ function render() {
 }
 
 els.translationSelect.addEventListener("change", (event) => setTranslation(event.target.value));
+els.compareTranslationSelect.addEventListener("change", (event) => {
+  state.compareTranslationId = event.target.value;
+  if (state.compareTranslationId === state.selectedTranslationId) {
+    state.compareTranslationId = fallbackCompareTranslationId();
+  }
+  renderCompareTranslationSelect();
+  renderHeader();
+  renderVerses();
+});
 els.googleLoginButton.addEventListener("click", () => {
   authService.login().catch(() => {
     els.authStatus.textContent = "로그인 실패";
@@ -568,6 +681,13 @@ els.themeToggle.addEventListener("click", () => {
 });
 els.favoritesToggle.addEventListener("click", () => {
   state.showFavorites = !state.showFavorites;
+  els.searchInput.value = "";
+  renderHeader();
+  renderVerses();
+});
+els.compareToggle.addEventListener("click", () => {
+  state.compareMode = !state.compareMode;
+  state.showFavorites = false;
   els.searchInput.value = "";
   renderHeader();
   renderVerses();
