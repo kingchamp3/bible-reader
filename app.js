@@ -2,6 +2,8 @@ const bibleBundle = window.BIBLE_TRANSLATIONS;
 const searchLimit = 300;
 const memberStorageKey = "bibleReaderMembers";
 const legacyBookmarkKey = "malsseumgilBookmarks";
+const authService = window.BIBLE_READER_AUTH;
+let cloudSaveTimer = null;
 
 if (!bibleBundle?.translations?.length) {
   const verseList = document.querySelector("#verseList");
@@ -51,11 +53,15 @@ const state = {
   showFavorites: false,
   members: memberState.members,
   activeMemberId: memberState.activeMemberId,
+  signedInUser: null,
   bookmarks: new Set(),
 };
 
 const els = {
   searchInput: document.querySelector("#searchInput"),
+  googleLoginButton: document.querySelector("#googleLoginButton"),
+  logoutButton: document.querySelector("#logoutButton"),
+  authStatus: document.querySelector("#authStatus"),
   memberSelect: document.querySelector("#memberSelect"),
   memberNameInput: document.querySelector("#memberNameInput"),
   addMemberButton: document.querySelector("#addMemberButton"),
@@ -109,14 +115,13 @@ function activeMember() {
 function persistMembers() {
   const member = activeMember();
   member.bookmarks = [...state.bookmarks];
-  localStorage.setItem(
-    memberStorageKey,
-    JSON.stringify({
-      activeMemberId: state.activeMemberId,
-      members: state.members,
-    }),
-  );
+  const data = {
+    activeMemberId: state.activeMemberId,
+    members: state.members,
+  };
+  localStorage.setItem(memberStorageKey, JSON.stringify(data));
   localStorage.setItem(legacyBookmarkKey, JSON.stringify(member.bookmarks));
+  scheduleCloudSave(data);
 }
 
 function loadActiveMember() {
@@ -180,6 +185,30 @@ function markCurrentChapterRead() {
   persistMembers();
 }
 
+function scheduleCloudSave(data) {
+  if (!authService?.enabled || !state.signedInUser) return;
+  window.clearTimeout(cloudSaveTimer);
+  cloudSaveTimer = window.setTimeout(() => {
+    authService.saveUserData(data).catch(() => {
+      els.authStatus.textContent = "클라우드 저장 실패";
+    });
+  }, 500);
+}
+
+async function applyCloudData() {
+  if (!authService?.enabled || !state.signedInUser) return;
+  const cloudData = await authService.loadUserData();
+  if (cloudData?.members?.length) {
+    state.members = cloudData.members;
+    state.activeMemberId = cloudData.activeMemberId || cloudData.members[0].id;
+    loadActiveMember();
+    persistMembers();
+    render();
+  } else {
+    persistMembers();
+  }
+}
+
 function parseBookmarkId(id) {
   const parts = id.split("-");
   const verse = Number(parts.pop());
@@ -239,6 +268,18 @@ function renderMemberPanel() {
     .map((member) => `<option value="${member.id}">${member.name}</option>`)
     .join("");
   els.memberSelect.value = state.activeMemberId;
+}
+
+function renderAuthPanel() {
+  const hasCloud = Boolean(authService?.enabled);
+  const signedIn = Boolean(state.signedInUser);
+  els.googleLoginButton.hidden = !hasCloud || signedIn;
+  els.logoutButton.hidden = !hasCloud || !signedIn;
+  els.authStatus.textContent = !hasCloud
+    ? "브라우저 저장 중"
+    : signedIn
+      ? `${state.signedInUser.name} 동기화 중`
+      : "Google 동기화 가능";
 }
 
 function setTranslation(translationId) {
@@ -357,6 +398,7 @@ function renderHeader() {
   els.bookmarkCount.textContent = state.bookmarks.size;
   els.favoritesToggle.classList.toggle("active", state.showFavorites);
   els.favoritesToggle.textContent = state.showFavorites ? "성경 본문 보기" : "즐겨찾기 보기";
+  renderAuthPanel();
   renderProgress();
 }
 
@@ -465,6 +507,16 @@ function render() {
 }
 
 els.translationSelect.addEventListener("change", (event) => setTranslation(event.target.value));
+els.googleLoginButton.addEventListener("click", () => {
+  authService.login().catch(() => {
+    els.authStatus.textContent = "로그인 실패";
+  });
+});
+els.logoutButton.addEventListener("click", () => {
+  authService.logout().catch(() => {
+    els.authStatus.textContent = "로그아웃 실패";
+  });
+});
 els.memberSelect.addEventListener("change", (event) => switchMember(event.target.value));
 els.addMemberButton.addEventListener("click", addMember);
 els.memberNameInput.addEventListener("keydown", (event) => {
@@ -524,3 +576,18 @@ loadActiveMember();
 persistMembers();
 render();
 saveBookmarks();
+
+authService?.onAuthChanged?.((user) => {
+  state.signedInUser = user;
+  renderAuthPanel();
+  if (user) {
+    els.authStatus.textContent = "클라우드 데이터 불러오는 중";
+    applyCloudData()
+      .then(() => {
+        renderAuthPanel();
+      })
+      .catch(() => {
+        els.authStatus.textContent = "클라우드 불러오기 실패";
+      });
+  }
+});
