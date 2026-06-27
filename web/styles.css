@@ -138,6 +138,25 @@ select {
   gap: 8px;
 }
 
+.auth-panel {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 84px;
+}
+
+.auth-panel button {
+  background: var(--green);
+  border: 0;
+  border-radius: 8px;
+  color: var(--panel);
+  font-weight: 900;
+  min-height: 40px;
+}
+
+.auth-panel span {
+  grid-column: 1 / -1;
+}
+
 .member-add {
   display: grid;
   gap: 8px;

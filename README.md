@@ -30,6 +30,21 @@ open-web.bat
 
 회원 정보는 현재 브라우저의 `localStorage`에 저장됩니다. 같은 기기와 같은 브라우저에서는 유지되지만, 다른 기기와 자동 동기화되지는 않습니다.
 
+Firebase 설정을 `web/firebase-config.js`에 입력하면 Google 로그인과 Firestore 동기화를 사용할 수 있습니다. Firebase Console에서 Web App을 만든 뒤 아래 값들을 복사해 넣으세요.
+
+```js
+window.FIREBASE_CONFIG = {
+  apiKey: "...",
+  authDomain: "...",
+  projectId: "...",
+  storageBucket: "...",
+  messagingSenderId: "...",
+  appId: "...",
+};
+```
+
+Firebase Authentication에서 Google 로그인을 활성화하고, Firestore Database를 만든 뒤 사용하세요.
+
 ## GitHub Pages로 인터넷 공개
 
 이 프로젝트에는 `.github/workflows/pages.yml` 배포 설정이 들어 있습니다. GitHub 저장소에 올린 뒤 GitHub Pages를 켜면 `web/` 폴더의 웹 성경이 인터넷에 공개됩니다.
