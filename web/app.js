@@ -2,8 +2,16 @@ const bibleBundle = window.BIBLE_TRANSLATIONS;
 const searchLimit = 300;
 const memberStorageKey = "bibleReaderMembers";
 const legacyBookmarkKey = "malsseumgilBookmarks";
-await window.BIBLE_READER_AUTH_READY;
-const authService = window.BIBLE_READER_AUTH;
+let authService = window.BIBLE_READER_AUTH;
+let authListenerAttached = false;
+window.BIBLE_READER_AUTH_READY?.then((service) => {
+  authService = service || window.BIBLE_READER_AUTH;
+  renderAuthPanel();
+  subscribeAuthChanges();
+}).catch((error) => {
+  window.BIBLE_READER_AUTH_ERROR = error?.message || "Google 로그인 준비 중 오류가 발생했습니다.";
+  renderAuthPanel();
+});
 let cloudSaveTimer = null;
 
 if (!bibleBundle?.translations?.length) {
@@ -318,10 +326,31 @@ function renderAuthPanel() {
   els.googleLoginButton.hidden = !hasCloud || signedIn;
   els.logoutButton.hidden = !hasCloud || !signedIn;
   els.authStatus.textContent = !hasCloud
-    ? "브라우저 저장 중"
+    ? window.BIBLE_READER_AUTH_ERROR
+      ? "Google 로그인 준비 실패 · 브라우저 저장 중"
+      : "브라우저 저장 중"
     : signedIn
       ? `${state.signedInUser.name} 동기화 중`
       : "Google 동기화 가능";
+}
+
+function subscribeAuthChanges() {
+  if (authListenerAttached || !authService?.enabled) return;
+  authListenerAttached = true;
+  authService.onAuthChanged((user) => {
+    state.signedInUser = user;
+    renderAuthPanel();
+    if (user) {
+      els.authStatus.textContent = "클라우드 데이터 불러오는 중";
+      applyCloudData()
+        .then(() => {
+          renderAuthPanel();
+        })
+        .catch(() => {
+          els.authStatus.textContent = "클라우드 불러오기 실패";
+        });
+    }
+  });
 }
 
 function setTranslation(translationId) {
@@ -647,8 +676,17 @@ els.compareTranslationSelect2.addEventListener("change", (event) => {
   renderAfterCompareSelection();
 });
 els.googleLoginButton.addEventListener("click", () => {
-  authService.login().catch(() => {
-    els.authStatus.textContent = "로그인 실패";
+  authService.login().catch((error) => {
+    const code = error?.code || "";
+    if (code.includes("unauthorized-domain")) {
+      els.authStatus.textContent = "로그인 실패: 승인된 도메인을 확인해 주세요";
+    } else if (code.includes("popup-blocked")) {
+      els.authStatus.textContent = "로그인 실패: 팝업 차단을 해제해 주세요";
+    } else if (code.includes("popup-closed")) {
+      els.authStatus.textContent = "로그인이 취소되었습니다";
+    } else {
+      els.authStatus.textContent = "로그인 실패";
+    }
   });
 });
 els.logoutButton.addEventListener("click", () => {
@@ -716,18 +754,4 @@ loadActiveMember();
 persistMembers();
 render();
 saveBookmarks();
-
-authService?.onAuthChanged?.((user) => {
-  state.signedInUser = user;
-  renderAuthPanel();
-  if (user) {
-    els.authStatus.textContent = "클라우드 데이터 불러오는 중";
-    applyCloudData()
-      .then(() => {
-        renderAuthPanel();
-      })
-      .catch(() => {
-        els.authStatus.textContent = "클라우드 불러오기 실패";
-      });
-  }
-});
+subscribeAuthChanges();
