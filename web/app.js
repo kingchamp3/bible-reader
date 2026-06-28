@@ -4,6 +4,7 @@ const memberStorageKey = "bibleReaderMembers";
 const legacyBookmarkKey = "malsseumgilBookmarks";
 let authService = window.BIBLE_READER_AUTH;
 let authListenerAttached = false;
+let cloudStatus = "idle";
 window.BIBLE_READER_AUTH_READY?.then((service) => {
   authService = service || window.BIBLE_READER_AUTH;
   renderAuthPanel();
@@ -13,6 +14,7 @@ window.BIBLE_READER_AUTH_READY?.then((service) => {
   renderAuthPanel();
 });
 let cloudSaveTimer = null;
+const cloudTimeoutMs = 8000;
 
 if (!bibleBundle?.translations?.length) {
   const verseList = document.querySelector("#verseList");
@@ -253,15 +255,24 @@ function scheduleCloudSave(data) {
   if (!authService?.enabled || !state.signedInUser) return;
   window.clearTimeout(cloudSaveTimer);
   cloudSaveTimer = window.setTimeout(() => {
-    authService.saveUserData(data).catch(() => {
+    withTimeout(authService.saveUserData(data), cloudTimeoutMs).catch(() => {
+      cloudStatus = "save-failed";
       els.authStatus.textContent = "클라우드 저장 실패";
     });
   }, 500);
 }
 
+function withTimeout(promise, timeoutMs) {
+  let timerId;
+  const timeout = new Promise((_, reject) => {
+    timerId = window.setTimeout(() => reject(new Error("timeout")), timeoutMs);
+  });
+  return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timerId));
+}
+
 async function applyCloudData() {
   if (!authService?.enabled || !state.signedInUser) return;
-  const cloudData = await authService.loadUserData();
+  const cloudData = await withTimeout(authService.loadUserData(), cloudTimeoutMs);
   if (cloudData?.members?.length) {
     state.members = cloudData.members;
     state.activeMemberId = cloudData.activeMemberId || cloudData.members[0].id;
@@ -271,6 +282,7 @@ async function applyCloudData() {
   } else {
     persistMembers();
   }
+  cloudStatus = "loaded";
 }
 
 function parseBookmarkId(id) {
@@ -330,7 +342,11 @@ function renderAuthPanel() {
       ? "Google 로그인 준비 실패 · 브라우저 저장 중"
       : "브라우저 저장 중"
     : signedIn
-      ? `${state.signedInUser.name} 동기화 중`
+      ? cloudStatus === "loaded"
+        ? `${state.signedInUser.name} 동기화됨`
+        : cloudStatus === "load-failed"
+          ? `${state.signedInUser.name} 로그인됨 · 브라우저 저장 중`
+          : `${state.signedInUser.name} 로그인됨`
       : "Google 동기화 가능";
 }
 
@@ -341,14 +357,18 @@ function subscribeAuthChanges() {
     state.signedInUser = user;
     renderAuthPanel();
     if (user) {
+      cloudStatus = "loading";
       els.authStatus.textContent = "클라우드 데이터 불러오는 중";
       applyCloudData()
         .then(() => {
           renderAuthPanel();
         })
         .catch(() => {
-          els.authStatus.textContent = "클라우드 불러오기 실패";
+          cloudStatus = "load-failed";
+          els.authStatus.textContent = `${state.signedInUser.name} 로그인됨 · 브라우저 저장 중`;
         });
+    } else {
+      cloudStatus = "idle";
     }
   });
 }
