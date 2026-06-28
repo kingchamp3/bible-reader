@@ -5,7 +5,8 @@ window.BIBLE_READER_AUTH = {
   enabled: false,
   user: null,
   async login() {
-    alert("Firebase 설정값을 먼저 입력해 주세요.");
+    const reason = window.BIBLE_READER_AUTH_ERROR ? `\n\n사유: ${window.BIBLE_READER_AUTH_ERROR}` : "";
+    alert(`Google 로그인을 준비하지 못했습니다.${reason}`);
   },
   async logout() {},
   async loadUserData() {
@@ -19,66 +20,72 @@ window.BIBLE_READER_AUTH = {
 
 window.BIBLE_READER_AUTH_READY = (async () => {
   if (!hasFirebaseConfig) {
+    window.BIBLE_READER_AUTH_ERROR = "Firebase 설정값이 없습니다.";
     return window.BIBLE_READER_AUTH;
   }
 
-  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js");
-  const {
-    GoogleAuthProvider,
-    getAuth,
-    onAuthStateChanged,
-    signInWithPopup,
-    signOut,
-  } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js");
-  const { doc, getDoc, getFirestore, setDoc } = await import(
-    "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js"
-  );
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js");
+    const {
+      GoogleAuthProvider,
+      getAuth,
+      onAuthStateChanged,
+      signInWithPopup,
+      signOut,
+    } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js");
+    const { doc, getDoc, getFirestore, setDoc } = await import(
+      "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js"
+    );
 
-  const app = initializeApp(config);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const provider = new GoogleAuthProvider();
+    const app = initializeApp(config);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
 
-  window.BIBLE_READER_AUTH = {
-    enabled: true,
-    user: null,
-    async login() {
-      await signInWithPopup(auth, provider);
-    },
-    async logout() {
-      await signOut(auth);
-    },
-    async loadUserData() {
-      if (!auth.currentUser) return null;
-      const snapshot = await getDoc(doc(db, "bibleReaderUsers", auth.currentUser.uid));
-      return snapshot.exists() ? snapshot.data() : null;
-    },
-    async saveUserData(data) {
-      if (!auth.currentUser) return;
-      await setDoc(
-        doc(db, "bibleReaderUsers", auth.currentUser.uid),
-        {
-          ...data,
-          email: auth.currentUser.email,
-          name: auth.currentUser.displayName,
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true },
-      );
-    },
-    onAuthChanged(callback) {
-      onAuthStateChanged(auth, (user) => {
-        this.user = user
-          ? {
-              uid: user.uid,
-              name: user.displayName || user.email || "Google 사용자",
-              email: user.email,
-            }
-          : null;
-        callback(this.user);
-      });
-    },
-  };
+    window.BIBLE_READER_AUTH = {
+      enabled: true,
+      user: null,
+      async login() {
+        await signInWithPopup(auth, provider);
+      },
+      async logout() {
+        await signOut(auth);
+      },
+      async loadUserData() {
+        if (!auth.currentUser) return null;
+        const snapshot = await getDoc(doc(db, "bibleReaderUsers", auth.currentUser.uid));
+        return snapshot.exists() ? snapshot.data() : null;
+      },
+      async saveUserData(data) {
+        if (!auth.currentUser) return;
+        await setDoc(
+          doc(db, "bibleReaderUsers", auth.currentUser.uid),
+          {
+            ...data,
+            email: auth.currentUser.email,
+            name: auth.currentUser.displayName,
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true },
+        );
+      },
+      onAuthChanged(callback) {
+        onAuthStateChanged(auth, (user) => {
+          this.user = user
+            ? {
+                uid: user.uid,
+                name: user.displayName || user.email || "Google 사용자",
+                email: user.email,
+              }
+            : null;
+          callback(this.user);
+        });
+      },
+    };
 
-  return window.BIBLE_READER_AUTH;
+    return window.BIBLE_READER_AUTH;
+  } catch (error) {
+    window.BIBLE_READER_AUTH_ERROR = error?.message || "Firebase 스크립트를 불러오지 못했습니다.";
+    return window.BIBLE_READER_AUTH;
+  }
 })();
