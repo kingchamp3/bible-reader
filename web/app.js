@@ -67,8 +67,6 @@ const els = {
   logoutButton: document.querySelector("#logoutButton"),
   authStatus: document.querySelector("#authStatus"),
   memberSelect: document.querySelector("#memberSelect"),
-  memberNameInput: document.querySelector("#memberNameInput"),
-  addMemberButton: document.querySelector("#addMemberButton"),
   progressPercent: document.querySelector("#progressPercent"),
   progressSummary: document.querySelector("#progressSummary"),
   lastReadButton: document.querySelector("#lastReadButton"),
@@ -297,20 +295,6 @@ function favoriteVerses() {
 function saveBookmarks() {
   persistMembers();
   els.bookmarkCount.textContent = state.bookmarks.size;
-}
-
-function addMember() {
-  const name = els.memberNameInput.value.trim();
-  if (!name) return;
-
-  const member = createMember(name);
-  state.members.push(member);
-  state.activeMemberId = member.id;
-  loadActiveMember();
-  els.memberNameInput.value = "";
-  state.showFavorites = false;
-  persistMembers();
-  render();
 }
 
 function switchMember(memberId) {
@@ -673,12 +657,6 @@ els.logoutButton.addEventListener("click", () => {
   });
 });
 els.memberSelect.addEventListener("change", (event) => switchMember(event.target.value));
-els.addMemberButton.addEventListener("click", addMember);
-els.memberNameInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    addMember();
-  }
-});
 els.lastReadButton.addEventListener("click", () => {
   const lastRead = activeMember().lastRead;
   if (!lastRead) return;

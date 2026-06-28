@@ -157,13 +157,6 @@ select {
   grid-column: 1 / -1;
 }
 
-.member-add {
-  display: grid;
-  gap: 8px;
-  grid-template-columns: minmax(0, 1fr) 62px;
-}
-
-.member-add button,
 .progress-card button {
   background: var(--green-soft);
   border: 0;
