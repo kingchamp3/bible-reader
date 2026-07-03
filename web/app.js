@@ -5,6 +5,7 @@ const legacyBookmarkKey = "malsseumgilBookmarks";
 let authService = window.BIBLE_READER_AUTH;
 let authListenerAttached = false;
 let cloudStatus = "idle";
+let cloudSaveDisabled = false;
 window.BIBLE_READER_AUTH_READY?.then((service) => {
   authService = service || window.BIBLE_READER_AUTH;
   renderAuthPanel();
@@ -252,12 +253,13 @@ function markCurrentChapterRead() {
 }
 
 function scheduleCloudSave(data) {
-  if (!authService?.enabled || !state.signedInUser) return;
+  if (!authService?.enabled || !state.signedInUser || cloudSaveDisabled) return;
   window.clearTimeout(cloudSaveTimer);
   cloudSaveTimer = window.setTimeout(() => {
     withTimeout(authService.saveUserData(data), cloudTimeoutMs).catch(() => {
+      cloudSaveDisabled = true;
       cloudStatus = "save-failed";
-      els.authStatus.textContent = "클라우드 저장 실패";
+      renderAuthPanel();
     });
   }, 500);
 }
@@ -344,7 +346,7 @@ function renderAuthPanel() {
     : signedIn
       ? cloudStatus === "loaded"
         ? `${state.signedInUser.name} 동기화됨`
-        : cloudStatus === "load-failed"
+        : cloudStatus === "load-failed" || cloudStatus === "save-failed"
           ? `${state.signedInUser.name} 로그인됨 · 브라우저 저장 중`
           : `${state.signedInUser.name} 로그인됨`
       : "Google 동기화 가능";
@@ -357,6 +359,7 @@ function subscribeAuthChanges() {
     state.signedInUser = user;
     renderAuthPanel();
     if (user) {
+      cloudSaveDisabled = false;
       cloudStatus = "loading";
       els.authStatus.textContent = "클라우드 데이터 불러오는 중";
       applyCloudData()
@@ -364,11 +367,13 @@ function subscribeAuthChanges() {
           renderAuthPanel();
         })
         .catch(() => {
+          cloudSaveDisabled = true;
           cloudStatus = "load-failed";
-          els.authStatus.textContent = `${state.signedInUser.name} 로그인됨 · 브라우저 저장 중`;
+          renderAuthPanel();
         });
     } else {
       cloudStatus = "idle";
+      cloudSaveDisabled = false;
     }
   });
 }
