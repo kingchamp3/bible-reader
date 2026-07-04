@@ -35,6 +35,7 @@ function createMember(name) {
     id: `member-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     name,
     bookmarks: [],
+    highlights: {},
     readChapters: [],
     lastRead: null,
   };
@@ -70,6 +71,7 @@ const state = {
   activeMemberId: memberState.activeMemberId,
   signedInUser: null,
   bookmarks: new Set(),
+  highlights: {},
 };
 
 const els = {
@@ -182,6 +184,7 @@ function activeMember() {
 function persistMembers() {
   const member = activeMember();
   member.bookmarks = [...state.bookmarks];
+  member.highlights = { ...state.highlights };
   const data = {
     activeMemberId: state.activeMemberId,
     members: state.members,
@@ -194,6 +197,7 @@ function persistMembers() {
 function loadActiveMember() {
   const member = activeMember();
   state.bookmarks = new Set(member.bookmarks || []);
+  state.highlights = { ...(member.highlights || {}) };
 }
 
 function allVerses() {
@@ -431,6 +435,17 @@ function toggleBookmark(bookId, chapter, verse) {
   renderVerses();
 }
 
+function toggleHighlight(bookId, chapter, verse, color) {
+  const id = bookmarkId(bookId, chapter, verse);
+  if (state.highlights[id] === color || color === "clear") {
+    delete state.highlights[id];
+  } else {
+    state.highlights[id] = color;
+  }
+  persistMembers();
+  renderVerses();
+}
+
 function renderTranslationSelect() {
   els.translationSelect.innerHTML = bibleBundle.translations
     .map((translation) => `<option value="${translation.id}">${translation.name}</option>`)
@@ -569,6 +584,52 @@ function attachCopyHandler(element, copyPayload) {
   });
 }
 
+function applyHighlight(row, id) {
+  const highlight = state.highlights[id];
+  if (highlight) {
+    row.dataset.highlight = highlight;
+  }
+}
+
+function createVerseActions({ bookId, chapter, verse, marked }) {
+  const actions = document.createElement("div");
+  actions.className = "verse-actions";
+
+  const save = document.createElement("button");
+  save.type = "button";
+  save.className = `verse-save${marked ? " saved" : ""}`;
+  save.textContent = marked ? "저장됨" : "저장";
+  save.addEventListener("click", () => toggleBookmark(bookId, chapter, verse));
+
+  const palette = document.createElement("div");
+  palette.className = "highlight-palette";
+  [
+    ["yellow", "노랑"],
+    ["green", "초록"],
+    ["pink", "분홍"],
+    ["blue", "파랑"],
+  ].forEach(([color, label]) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `highlight-swatch highlight-${color}`;
+    button.title = `${label} 형광펜`;
+    button.setAttribute("aria-label", `${label} 형광펜`);
+    button.classList.toggle("active", state.highlights[bookmarkId(bookId, chapter, verse)] === color);
+    button.addEventListener("click", () => toggleHighlight(bookId, chapter, verse, color));
+    palette.append(button);
+  });
+
+  const clear = document.createElement("button");
+  clear.type = "button";
+  clear.className = "highlight-clear";
+  clear.textContent = "지우기";
+  clear.addEventListener("click", () => toggleHighlight(bookId, chapter, verse, "clear"));
+  palette.append(clear);
+
+  actions.append(save, palette);
+  return actions;
+}
+
 function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult }) {
   const id = bookmarkId(bookId, chapter, verse);
   const marked = state.bookmarks.has(id);
@@ -576,6 +637,7 @@ function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult }
   const book = translation.books.find((item) => item.id === bookId) || selectedBook();
   const row = document.createElement("section");
   row.className = `verse-row${marked ? " marked" : ""}`;
+  applyHighlight(row, id);
 
   const ref = document.createElement("button");
   ref.type = "button";
@@ -596,13 +658,7 @@ function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult }
     text,
   });
 
-  const save = document.createElement("button");
-  save.type = "button";
-  save.className = `verse-save${marked ? " saved" : ""}`;
-  save.textContent = marked ? "저장됨" : "저장";
-  save.addEventListener("click", () => toggleBookmark(bookId, chapter, verse));
-
-  row.append(ref, body, save);
+  row.append(ref, body, createVerseActions({ bookId, chapter, verse, marked }));
   return row;
 }
 
@@ -639,6 +695,7 @@ function createCompareVerseRow({ bookId, chapter, verse, text }) {
   const bookName = selectedBook().name;
   const row = document.createElement("section");
   row.className = `verse-row compare-row${marked ? " marked" : ""}`;
+  applyHighlight(row, id);
 
   const ref = document.createElement("button");
   ref.type = "button";
@@ -653,13 +710,7 @@ function createCompareVerseRow({ bookId, chapter, verse, text }) {
     body.append(createComparePane(translation, { bookName, chapter, verse, text: verseText }));
   });
 
-  const save = document.createElement("button");
-  save.type = "button";
-  save.className = `verse-save${marked ? " saved" : ""}`;
-  save.textContent = marked ? "저장됨" : "저장";
-  save.addEventListener("click", () => toggleBookmark(bookId, chapter, verse));
-
-  row.append(ref, body, save);
+  row.append(ref, body, createVerseActions({ bookId, chapter, verse, marked }));
   return row;
 }
 

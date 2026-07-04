@@ -9,6 +9,10 @@
   --green-soft: #e7efe7;
   --gold: #92784d;
   --marked: #f0f6ec;
+  --highlight-yellow: #fff3a8;
+  --highlight-green: #d9f5c7;
+  --highlight-pink: #ffd8e8;
+  --highlight-blue: #d7ecff;
   --shadow: 0 18px 50px rgba(49, 42, 28, 0.12);
 }
 
@@ -23,6 +27,10 @@ body.dark {
   --green-soft: #27392f;
   --gold: #dbc28d;
   --marked: #29382f;
+  --highlight-yellow: #4f4722;
+  --highlight-green: #29452f;
+  --highlight-pink: #4d2d3b;
+  --highlight-blue: #263d50;
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
 }
 
@@ -204,7 +212,9 @@ select {
 .testament-tabs button,
 .book-buttons button,
 .verse-ref,
-.verse-save {
+.verse-save,
+.highlight-swatch,
+.highlight-clear {
   border: 0;
   border-radius: 8px;
   font-weight: 800;
@@ -360,6 +370,22 @@ select {
   background: var(--marked);
 }
 
+.verse-row[data-highlight="yellow"] {
+  background: var(--highlight-yellow);
+}
+
+.verse-row[data-highlight="green"] {
+  background: var(--highlight-green);
+}
+
+.verse-row[data-highlight="pink"] {
+  background: var(--highlight-pink);
+}
+
+.verse-row[data-highlight="blue"] {
+  background: var(--highlight-blue);
+}
+
 .compare-row {
   align-items: start;
 }
@@ -417,8 +443,13 @@ select {
   overflow-wrap: anywhere;
 }
 
-.verse-save {
+.verse-actions {
   align-self: start;
+  display: grid;
+  gap: 8px;
+}
+
+.verse-save {
   background: transparent;
   color: var(--muted);
   min-height: 38px;
@@ -426,6 +457,49 @@ select {
 
 .verse-save.saved {
   color: #2f8f5b;
+}
+
+.highlight-palette {
+  display: grid;
+  gap: 5px;
+  grid-template-columns: repeat(2, 24px);
+}
+
+.highlight-swatch {
+  border: 1px solid var(--line);
+  height: 24px;
+  min-width: 24px;
+  padding: 0;
+}
+
+.highlight-swatch.active {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+.highlight-yellow {
+  background: #ffe45c;
+}
+
+.highlight-green {
+  background: #a9e77b;
+}
+
+.highlight-pink {
+  background: #ff9fc8;
+}
+
+.highlight-blue {
+  background: #8ecbff;
+}
+
+.highlight-clear {
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  grid-column: 1 / -1;
+  min-height: 24px;
+  padding: 0;
 }
 
 .empty {
@@ -468,7 +542,7 @@ select {
     grid-template-columns: 72px minmax(0, 1fr);
   }
 
-  .verse-save {
+  .verse-actions {
     grid-column: 2;
     justify-self: start;
   }
