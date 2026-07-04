@@ -203,6 +203,7 @@ select {
 .toolbar button,
 .testament-tabs button,
 .book-buttons button,
+.verse-ref,
 .verse-save {
   border: 0;
   border-radius: 8px;
@@ -400,9 +401,11 @@ select {
 }
 
 .verse-ref {
+  background: transparent;
   color: var(--gold);
   font-size: 13px;
   font-weight: 900;
+  min-height: 38px;
   padding-top: 8px;
 }
 

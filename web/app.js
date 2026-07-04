@@ -579,7 +579,7 @@ function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult }
 
   const ref = document.createElement("button");
   ref.type = "button";
-  ref.className = "verse-ref verse-save";
+  ref.className = "verse-ref";
   ref.textContent = refLabel || verse;
   if (searchResult) {
     ref.addEventListener("click", () => setBook(bookId, chapter));
@@ -642,7 +642,7 @@ function createCompareVerseRow({ bookId, chapter, verse, text }) {
 
   const ref = document.createElement("button");
   ref.type = "button";
-  ref.className = "verse-ref verse-save";
+  ref.className = "verse-ref";
   ref.textContent = verse;
 
   const body = document.createElement("div");
