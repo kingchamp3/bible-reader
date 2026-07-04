@@ -78,6 +78,7 @@ const state = {
   textHighlights: {},
   notes: {},
   editingNoteId: null,
+  lastTextSelection: null,
 };
 
 const els = {
@@ -488,6 +489,7 @@ function setTranslation(translationId) {
   els.searchInput.value = "";
   state.showFavorites = false;
   state.highlightFilter = null;
+  state.lastTextSelection = null;
   render();
 }
 
@@ -502,6 +504,7 @@ function setBook(bookId, chapter = 1) {
   els.searchInput.value = "";
   state.showFavorites = false;
   state.highlightFilter = null;
+  state.lastTextSelection = null;
   render();
 }
 
@@ -510,6 +513,7 @@ function setChapter(chapter) {
   els.searchInput.value = "";
   state.showFavorites = false;
   state.highlightFilter = null;
+  state.lastTextSelection = null;
   render();
 }
 
@@ -547,6 +551,30 @@ function selectedVerseTextRange(verseId) {
   return { start, end: start + selectedLength };
 }
 
+function captureTextSelection() {
+  const selection = window.getSelection();
+  if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
+
+  const range = selection.getRangeAt(0);
+  const startBody = closestVerseTextNode(range.startContainer);
+  const endBody = closestVerseTextNode(range.endContainer);
+  if (!startBody || startBody !== endBody || !startBody.dataset.verseId) return;
+
+  const before = document.createRange();
+  before.selectNodeContents(startBody);
+  before.setEnd(range.startContainer, range.startOffset);
+  const start = before.toString().length;
+  const selectedLength = range.toString().length;
+  if (selectedLength <= 0) return;
+
+  state.lastTextSelection = {
+    translationId: state.selectedTranslationId,
+    verseId: startBody.dataset.verseId,
+    start,
+    end: start + selectedLength,
+  };
+}
+
 function mergeTextHighlights(items) {
   return items
     .filter((item) => item.end > item.start)
@@ -579,9 +607,16 @@ function setTextHighlight(translationId, verseId, range, color) {
 
 function toggleHighlight(bookId, chapter, verse, color) {
   const id = bookmarkId(bookId, chapter, verse);
-  const range = selectedVerseTextRange(id);
+  captureTextSelection();
+  const remembered = state.lastTextSelection;
+  const range =
+    selectedVerseTextRange(id) ||
+    (remembered?.translationId === state.selectedTranslationId && remembered?.verseId === id
+      ? { start: remembered.start, end: remembered.end }
+      : null);
   if (range) {
     setTextHighlight(state.selectedTranslationId, id, range, color);
+    state.lastTextSelection = null;
     return;
   }
 
@@ -878,6 +913,8 @@ function createVerseActions({ bookId, chapter, verse, marked }) {
     button.title = `${label} 형광펜`;
     button.setAttribute("aria-label", `${label} 형광펜`);
     button.classList.toggle("active", state.highlights[id] === color || hasTextHighlightColor(id, color));
+    button.addEventListener("mousedown", (event) => event.preventDefault());
+    button.addEventListener("touchstart", () => captureTextSelection(), { passive: true });
     button.addEventListener("click", () => toggleHighlight(bookId, chapter, verse, color));
     palette.append(button);
   });
@@ -887,6 +924,8 @@ function createVerseActions({ bookId, chapter, verse, marked }) {
   clear.className = "highlight-clear";
   clear.dataset.highlightColor = "clear";
   clear.textContent = "지우기";
+  clear.addEventListener("mousedown", (event) => event.preventDefault());
+  clear.addEventListener("touchstart", () => captureTextSelection(), { passive: true });
   clear.addEventListener("click", () => toggleHighlight(bookId, chapter, verse, "clear"));
   palette.append(clear);
 
@@ -1237,6 +1276,7 @@ els.readingPlan.addEventListener("click", (event) => {
 els.searchInput.addEventListener("input", () => {
   state.showFavorites = false;
   state.highlightFilter = null;
+  state.lastTextSelection = null;
   renderHeader();
   renderVerses();
 });
@@ -1272,10 +1312,13 @@ els.highlightFilter.addEventListener("click", (event) => {
   if (!button) return;
   state.highlightFilter = state.highlightFilter === button.dataset.highlightFilter ? null : button.dataset.highlightFilter;
   state.showFavorites = false;
+  state.lastTextSelection = null;
   els.searchInput.value = "";
   renderHeader();
   renderVerses();
 });
+
+document.addEventListener("selectionchange", captureTextSelection);
 
 loadActiveMember();
 persistMembers();
