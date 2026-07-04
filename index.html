@@ -31,7 +31,13 @@
               <span id="progressSummary">읽은 장 0 / 0</span>
             </div>
             <button id="lastReadButton" type="button">최근 위치</button>
+            <button id="chapterReadToggle" type="button">현재 장 체크</button>
           </div>
+        </section>
+
+        <section class="daily-card" id="dailyVerseCard">
+          <span>오늘의 말씀</span>
+          <button id="dailyVerseButton" type="button">불러오는 중</button>
         </section>
 
         <label class="search-box">
@@ -66,6 +72,16 @@
           <button id="compareToggle" type="button">대조 보기</button>
         </section>
 
+        <section class="highlight-filter" aria-label="형광펜 모아보기">
+          <span>형광펜 모아보기</span>
+          <div>
+            <button type="button" data-highlight-filter="yellow">노랑</button>
+            <button type="button" data-highlight-filter="green">초록</button>
+            <button type="button" data-highlight-filter="pink">분홍</button>
+            <button type="button" data-highlight-filter="blue">파랑</button>
+          </div>
+        </section>
+
         <section class="selectors">
           <label>
             <span>성경</span>
@@ -83,6 +99,11 @@
             <button id="newTab" type="button">신약</button>
           </div>
           <div id="bookList" class="book-buttons"></div>
+        </section>
+
+        <section class="reading-plan" aria-label="성경 읽기표">
+          <span>성경 읽기표</span>
+          <div id="readingPlan" class="reading-plan-grid"></div>
         </section>
       </aside>
 

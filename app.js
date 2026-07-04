@@ -36,6 +36,7 @@ function createMember(name) {
     name,
     bookmarks: [],
     highlights: {},
+    notes: {},
     readChapters: [],
     lastRead: null,
   };
@@ -66,12 +67,15 @@ const state = {
   selectedChapter: 1,
   fontSize: 20,
   showFavorites: false,
+  highlightFilter: null,
   compareMode: false,
   members: memberState.members,
   activeMemberId: memberState.activeMemberId,
   signedInUser: null,
   bookmarks: new Set(),
   highlights: {},
+  notes: {},
+  editingNoteId: null,
 };
 
 const els = {
@@ -83,6 +87,8 @@ const els = {
   progressPercent: document.querySelector("#progressPercent"),
   progressSummary: document.querySelector("#progressSummary"),
   lastReadButton: document.querySelector("#lastReadButton"),
+  chapterReadToggle: document.querySelector("#chapterReadToggle"),
+  dailyVerseButton: document.querySelector("#dailyVerseButton"),
   translationSelect: document.querySelector("#translationSelect"),
   compareTranslationSelect: document.querySelector("#compareTranslationSelect"),
   compareTranslationSelect2: document.querySelector("#compareTranslationSelect2"),
@@ -102,6 +108,8 @@ const els = {
   themeToggle: document.querySelector("#themeToggle"),
   favoritesToggle: document.querySelector("#favoritesToggle"),
   compareToggle: document.querySelector("#compareToggle"),
+  highlightFilter: document.querySelector(".highlight-filter"),
+  readingPlan: document.querySelector("#readingPlan"),
 };
 
 function selectedTranslation() {
@@ -185,6 +193,7 @@ function persistMembers() {
   const member = activeMember();
   member.bookmarks = [...state.bookmarks];
   member.highlights = { ...state.highlights };
+  member.notes = { ...state.notes };
   const data = {
     activeMemberId: state.activeMemberId,
     members: state.members,
@@ -198,6 +207,7 @@ function loadActiveMember() {
   const member = activeMember();
   state.bookmarks = new Set(member.bookmarks || []);
   state.highlights = { ...(member.highlights || {}) };
+  state.notes = { ...(member.notes || {}) };
 }
 
 function allVerses() {
@@ -222,6 +232,10 @@ function chapterProgressId(translationId, bookId, chapter) {
   return `${translationId}:${bookId}:${chapter}`;
 }
 
+function verseStorageId(translationId, bookId, chapter, verse) {
+  return `${translationId}:${bookId}:${chapter}:${verse}`;
+}
+
 function totalChapterCount(translation = selectedTranslation()) {
   return translation.books.reduce((total, book) => total + book.chapters.length, 0);
 }
@@ -242,6 +256,30 @@ function currentLocation() {
     bookName: book.name,
     chapter: chapter.chapter,
   };
+}
+
+function currentChapterProgressId() {
+  const location = currentLocation();
+  return chapterProgressId(location.translationId, location.bookId, location.chapter);
+}
+
+function isCurrentChapterRead() {
+  const member = activeMember();
+  return (member.readChapters || []).includes(currentChapterProgressId());
+}
+
+function toggleCurrentChapterRead() {
+  const member = activeMember();
+  const progressId = currentChapterProgressId();
+  member.readChapters = member.readChapters || [];
+  if (member.readChapters.includes(progressId)) {
+    member.readChapters = member.readChapters.filter((id) => id !== progressId);
+  } else {
+    member.readChapters.push(progressId);
+    member.lastRead = currentLocation();
+  }
+  persistMembers();
+  render();
 }
 
 function markCurrentChapterRead() {
@@ -316,6 +354,35 @@ function favoriteVerses() {
       };
     })
     .filter(Boolean);
+}
+
+function highlightedVerses(color) {
+  const translation = selectedTranslation();
+  return Object.entries(state.highlights)
+    .filter(([, highlightColor]) => highlightColor === color)
+    .map(([id]) => {
+      const parsed = parseBookmarkId(id);
+      const book = translation.books.find((item) => item.id === parsed.bookId);
+      const chapter = book?.chapters.find((item) => item.chapter === parsed.chapter);
+      const verse = chapter?.verses.find((item) => item.verse === parsed.verse);
+      if (!book || !chapter || !verse) return null;
+      return {
+        ...verse,
+        bookId: book.id,
+        bookName: book.name,
+        chapter: chapter.chapter,
+      };
+    })
+    .filter(Boolean);
+}
+
+function dailyVerse() {
+  const verses = allVerses();
+  const today = new Date();
+  const seed = Number(
+    `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(today.getDate()).padStart(2, "0")}`,
+  );
+  return verses[seed % verses.length];
 }
 
 function saveBookmarks() {
@@ -401,6 +468,7 @@ function setTranslation(translationId) {
   state.activeTestament = nextBook.testament;
   els.searchInput.value = "";
   state.showFavorites = false;
+  state.highlightFilter = null;
   render();
 }
 
@@ -414,6 +482,7 @@ function setBook(bookId, chapter = 1) {
   state.activeTestament = book.testament;
   els.searchInput.value = "";
   state.showFavorites = false;
+  state.highlightFilter = null;
   render();
 }
 
@@ -421,6 +490,7 @@ function setChapter(chapter) {
   state.selectedChapter = Number(chapter);
   els.searchInput.value = "";
   state.showFavorites = false;
+  state.highlightFilter = null;
   render();
 }
 
@@ -442,6 +512,24 @@ function toggleHighlight(bookId, chapter, verse, color) {
   } else {
     state.highlights[id] = color;
   }
+  persistMembers();
+  renderVerses();
+}
+
+function editVerseNote(bookId, chapter, verse) {
+  const id = bookmarkId(bookId, chapter, verse);
+  state.editingNoteId = state.editingNoteId === id ? null : id;
+  renderVerses();
+}
+
+function saveVerseNote(id, value) {
+  const trimmed = value.trim();
+  if (trimmed) {
+    state.notes[id] = trimmed;
+  } else {
+    delete state.notes[id];
+  }
+  state.editingNoteId = null;
   persistMembers();
   renderVerses();
 }
@@ -477,6 +565,30 @@ function renderProgress() {
   els.lastReadButton.textContent = member.lastRead
     ? `${member.lastRead.bookName} ${member.lastRead.chapter}장`
     : "최근 위치";
+  els.chapterReadToggle.textContent = isCurrentChapterRead() ? "현재 장 읽음 취소" : "현재 장 읽음 체크";
+}
+
+function renderDailyVerse() {
+  const verse = dailyVerse();
+  els.dailyVerseButton.textContent = `${verse.bookName} ${verse.chapter}:${verse.verse} ${verse.text}`;
+  els.dailyVerseButton.onclick = () => {
+    setBook(verse.bookId, verse.chapter);
+  };
+}
+
+function renderReadingPlan() {
+  const translation = selectedTranslation();
+  const book = selectedBook();
+  const member = activeMember();
+  const readSet = new Set(member.readChapters || []);
+  els.readingPlan.innerHTML = book.chapters
+    .map((chapter) => {
+      const id = chapterProgressId(translation.id, book.id, chapter.chapter);
+      const read = readSet.has(id);
+      const active = chapter.chapter === state.selectedChapter;
+      return `<button type="button" class="${read ? "read" : ""} ${active ? "active" : ""}" data-plan-chapter="${chapter.chapter}">${chapter.chapter}</button>`;
+    })
+    .join("");
 }
 
 function renderBookSelect() {
@@ -520,9 +632,13 @@ function renderHeader() {
   const comparing = state.compareMode && !state.showFavorites && !searching;
   els.readerMeta.textContent = comparing
     ? parallelTranslations.map((item) => item.name).join(" ↔ ")
+    : state.highlightFilter
+      ? `형광펜 · ${highlightLabel(state.highlightFilter)}`
     : `${translation.name} · ${translation.verseCount.toLocaleString()}절`;
   els.readerTitle.textContent = state.showFavorites
     ? "즐겨찾기"
+    : state.highlightFilter
+      ? "형광펜 모아보기"
     : searching
       ? "검색 결과"
       : comparing
@@ -535,8 +651,21 @@ function renderHeader() {
   els.favoritesToggle.textContent = state.showFavorites ? "성경 본문 보기" : "즐겨찾기 보기";
   els.compareToggle.classList.toggle("active", state.compareMode);
   els.compareToggle.textContent = state.compareMode ? "대조 끄기" : "대조 보기";
+  els.highlightFilter.querySelectorAll("button[data-highlight-filter]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.highlightFilter === state.highlightFilter);
+  });
   renderAuthPanel();
   renderProgress();
+  renderReadingPlan();
+}
+
+function highlightLabel(color) {
+  return {
+    yellow: "노랑",
+    green: "초록",
+    pink: "분홍",
+    blue: "파랑",
+  }[color] || color;
 }
 
 async function copyText(text) {
@@ -584,6 +713,36 @@ function attachCopyHandler(element, copyPayload) {
   });
 }
 
+function appendHighlightedText(element, text, query) {
+  if (!query) {
+    element.textContent = text;
+    return;
+  }
+
+  const lowerText = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  let index = 0;
+  let matchIndex = lowerText.indexOf(lowerQuery, index);
+  if (matchIndex === -1) {
+    element.textContent = text;
+    return;
+  }
+
+  while (matchIndex !== -1) {
+    if (matchIndex > index) {
+      element.append(document.createTextNode(text.slice(index, matchIndex)));
+    }
+    const mark = document.createElement("mark");
+    mark.textContent = text.slice(matchIndex, matchIndex + query.length);
+    element.append(mark);
+    index = matchIndex + query.length;
+    matchIndex = lowerText.indexOf(lowerQuery, index);
+  }
+  if (index < text.length) {
+    element.append(document.createTextNode(text.slice(index)));
+  }
+}
+
 function applyHighlight(row, id) {
   const highlight = state.highlights[id];
   if (highlight) {
@@ -612,6 +771,7 @@ function createVerseActions({ bookId, chapter, verse, marked }) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = `highlight-swatch highlight-${color}`;
+    button.dataset.highlightColor = color;
     button.title = `${label} 형광펜`;
     button.setAttribute("aria-label", `${label} 형광펜`);
     button.classList.toggle("active", state.highlights[bookmarkId(bookId, chapter, verse)] === color);
@@ -622,21 +782,79 @@ function createVerseActions({ bookId, chapter, verse, marked }) {
   const clear = document.createElement("button");
   clear.type = "button";
   clear.className = "highlight-clear";
+  clear.dataset.highlightColor = "clear";
   clear.textContent = "지우기";
   clear.addEventListener("click", () => toggleHighlight(bookId, chapter, verse, "clear"));
   palette.append(clear);
 
-  actions.append(save, palette);
+  const note = document.createElement("button");
+  note.type = "button";
+  note.dataset.noteButton = bookmarkId(bookId, chapter, verse);
+  note.className = `verse-note-button${state.notes[bookmarkId(bookId, chapter, verse)] ? " has-note" : ""}`;
+  note.textContent = state.notes[bookmarkId(bookId, chapter, verse)] ? "메모됨" : "메모";
+  note.addEventListener("click", () => editVerseNote(bookId, chapter, verse));
+
+  actions.append(save, palette, note);
   return actions;
 }
 
-function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult }) {
+function createNoteElement(id) {
+  const noteText = state.notes[id];
+  if (!noteText) return null;
+
+  const note = document.createElement("p");
+  note.className = "verse-note";
+  note.textContent = noteText;
+  return note;
+}
+
+function createNoteEditor(id) {
+  if (state.editingNoteId !== id) return null;
+
+  const editor = document.createElement("div");
+  editor.className = "verse-note-editor";
+  editor.dataset.noteEditor = id;
+
+  const textarea = document.createElement("textarea");
+  textarea.value = state.notes[id] || "";
+  textarea.placeholder = "구절 메모";
+  textarea.rows = 3;
+
+  const actions = document.createElement("div");
+
+  const save = document.createElement("button");
+  save.type = "button";
+  save.dataset.noteSave = id;
+  save.textContent = "저장";
+  save.addEventListener("click", () => saveVerseNote(id, textarea.value));
+
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.dataset.noteDelete = id;
+  remove.textContent = "삭제";
+  remove.addEventListener("click", () => saveVerseNote(id, ""));
+
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.textContent = "취소";
+  cancel.addEventListener("click", () => {
+    state.editingNoteId = null;
+    renderVerses();
+  });
+
+  actions.append(save, remove, cancel);
+  editor.append(textarea, actions);
+  return editor;
+}
+
+function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult, searchQuery }) {
   const id = bookmarkId(bookId, chapter, verse);
   const marked = state.bookmarks.has(id);
   const translation = selectedTranslation();
   const book = translation.books.find((item) => item.id === bookId) || selectedBook();
   const row = document.createElement("section");
   row.className = `verse-row${marked ? " marked" : ""}`;
+  row.dataset.verseId = id;
   applyHighlight(row, id);
 
   const ref = document.createElement("button");
@@ -649,7 +867,7 @@ function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult }
 
   const body = document.createElement("div");
   body.className = "verse-text";
-  body.textContent = text;
+  appendHighlightedText(body, text, searchQuery);
   attachCopyHandler(body, {
     translationName: translation.name,
     bookName: book.name,
@@ -657,8 +875,18 @@ function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult }
     verse,
     text,
   });
+  const noteEditor = createNoteEditor(id);
+  const note = createNoteElement(id);
+  const content = document.createElement("div");
+  content.className = "verse-content";
+  content.append(body);
+  if (noteEditor) {
+    content.append(noteEditor);
+  } else if (note) {
+    content.append(note);
+  }
 
-  row.append(ref, body, createVerseActions({ bookId, chapter, verse, marked }));
+  row.append(ref, content, createVerseActions({ bookId, chapter, verse, marked }));
   return row;
 }
 
@@ -695,6 +923,7 @@ function createCompareVerseRow({ bookId, chapter, verse, text }) {
   const bookName = selectedBook().name;
   const row = document.createElement("section");
   row.className = `verse-row compare-row${marked ? " marked" : ""}`;
+  row.dataset.verseId = id;
   applyHighlight(row, id);
 
   const ref = document.createElement("button");
@@ -709,8 +938,18 @@ function createCompareVerseRow({ bookId, chapter, verse, text }) {
     const verseText = index === 0 ? text : findTranslationVerse(translation, bookId, chapter, verse)?.text;
     body.append(createComparePane(translation, { bookName, chapter, verse, text: verseText }));
   });
+  const noteEditor = createNoteEditor(id);
+  const note = createNoteElement(id);
+  const content = document.createElement("div");
+  content.className = "verse-content";
+  content.append(body);
+  if (noteEditor) {
+    content.append(noteEditor);
+  } else if (note) {
+    content.append(note);
+  }
 
-  row.append(ref, body, createVerseActions({ bookId, chapter, verse, marked }));
+  row.append(ref, content, createVerseActions({ bookId, chapter, verse, marked }));
   return row;
 }
 
@@ -718,6 +957,30 @@ function renderVerses() {
   const query = els.searchInput.value.trim();
   const lowerQuery = query.toLowerCase();
   els.verseList.innerHTML = "";
+
+  if (state.highlightFilter) {
+    els.resultSummary.hidden = false;
+    const verses = highlightedVerses(state.highlightFilter);
+    els.resultSummary.textContent = `${highlightLabel(state.highlightFilter)} 형광펜 ${verses.length}개`;
+
+    if (verses.length === 0) {
+      els.verseList.innerHTML = '<p class="empty">이 색으로 표시한 구절이 없습니다.</p>';
+      return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    verses.forEach((verse) => {
+      fragment.append(
+        createVerseRow({
+          ...verse,
+          refLabel: `${verse.bookName} ${verse.chapter}:${verse.verse}`,
+          searchResult: true,
+        }),
+      );
+    });
+    els.verseList.append(fragment);
+    return;
+  }
 
   if (state.showFavorites) {
     els.resultSummary.hidden = false;
@@ -761,6 +1024,7 @@ function renderVerses() {
           ...verse,
           refLabel: `${verse.bookName} ${verse.chapter}:${verse.verse}`,
           searchResult: true,
+          searchQuery: query,
         }),
       );
     });
@@ -769,7 +1033,6 @@ function renderVerses() {
   }
 
   els.resultSummary.hidden = true;
-  markCurrentChapterRead();
   const book = selectedBook();
   const chapter = selectedChapter();
   const fragment = document.createDocumentFragment();
@@ -795,6 +1058,7 @@ function render() {
   renderChapterSelect();
   renderTabs();
   renderBookButtons();
+  renderDailyVerse();
   renderHeader();
   renderVerses();
 }
@@ -841,6 +1105,7 @@ els.lastReadButton.addEventListener("click", () => {
   setTranslation(lastRead.translationId);
   setBook(lastRead.bookId, lastRead.chapter);
 });
+els.chapterReadToggle.addEventListener("click", toggleCurrentChapterRead);
 els.bookSelect.addEventListener("change", (event) => setBook(event.target.value));
 els.chapterSelect.addEventListener("change", (event) => setChapter(event.target.value));
 els.oldTab.addEventListener("click", () => {
@@ -859,8 +1124,15 @@ els.bookList.addEventListener("click", (event) => {
     setBook(button.dataset.bookId);
   }
 });
+els.readingPlan.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-plan-chapter]");
+  if (button) {
+    setChapter(button.dataset.planChapter);
+  }
+});
 els.searchInput.addEventListener("input", () => {
   state.showFavorites = false;
+  state.highlightFilter = null;
   renderHeader();
   renderVerses();
 });
@@ -878,12 +1150,23 @@ els.themeToggle.addEventListener("click", () => {
 });
 els.favoritesToggle.addEventListener("click", () => {
   state.showFavorites = !state.showFavorites;
+  state.highlightFilter = null;
   els.searchInput.value = "";
   renderHeader();
   renderVerses();
 });
 els.compareToggle.addEventListener("click", () => {
   state.compareMode = !state.compareMode;
+  state.showFavorites = false;
+  state.highlightFilter = null;
+  els.searchInput.value = "";
+  renderHeader();
+  renderVerses();
+});
+els.highlightFilter.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-highlight-filter]");
+  if (!button) return;
+  state.highlightFilter = state.highlightFilter === button.dataset.highlightFilter ? null : button.dataset.highlightFilter;
   state.showFavorites = false;
   els.searchInput.value = "";
   renderHeader();
