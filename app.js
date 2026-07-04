@@ -524,9 +524,56 @@ function renderHeader() {
   renderProgress();
 }
 
+async function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Some browsers expose the Clipboard API but deny it in embedded contexts.
+    }
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.top = "-1000px";
+  document.body.append(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  textarea.remove();
+}
+
+function showCopyStatus(success) {
+  const previousStatus = els.authStatus.textContent;
+  els.authStatus.textContent = success ? "구절이 복사되었습니다" : "복사하지 못했습니다";
+  window.setTimeout(() => {
+    if (els.authStatus.textContent === "구절이 복사되었습니다" || els.authStatus.textContent === "복사하지 못했습니다") {
+      els.authStatus.textContent = previousStatus;
+    }
+  }, 1400);
+}
+
+function formatVerseCopy({ translationName, bookName, chapter, verse, text }) {
+  return `[${translationName}] ${bookName} ${chapter}:${verse} ${text}`;
+}
+
+function attachCopyHandler(element, copyPayload) {
+  element.classList.add("copyable-verse");
+  element.title = "클릭하면 구절이 복사됩니다";
+  element.addEventListener("click", () => {
+    copyText(formatVerseCopy(copyPayload))
+      .then(() => showCopyStatus(true))
+      .catch(() => showCopyStatus(false));
+  });
+}
+
 function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult }) {
   const id = bookmarkId(bookId, chapter, verse);
   const marked = state.bookmarks.has(id);
+  const translation = selectedTranslation();
+  const book = translation.books.find((item) => item.id === bookId) || selectedBook();
   const row = document.createElement("section");
   row.className = `verse-row${marked ? " marked" : ""}`;
 
@@ -541,6 +588,13 @@ function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult }
   const body = document.createElement("div");
   body.className = "verse-text";
   body.textContent = text;
+  attachCopyHandler(body, {
+    translationName: translation.name,
+    bookName: book.name,
+    chapter,
+    verse,
+    text,
+  });
 
   const save = document.createElement("button");
   save.type = "button";
@@ -558,13 +612,22 @@ function findTranslationVerse(translation, bookId, chapterNumber, verseNumber) {
   return chapter?.verses.find((item) => item.verse === verseNumber);
 }
 
-function createComparePane(translation, text) {
+function createComparePane(translation, { bookName, chapter, verse, text }) {
   const pane = document.createElement("div");
   pane.className = "compare-pane";
   const label = document.createElement("strong");
   label.textContent = translation.name;
   const verseText = document.createElement("p");
   verseText.textContent = text || "해당 절 없음";
+  if (text) {
+    attachCopyHandler(verseText, {
+      translationName: translation.name,
+      bookName,
+      chapter,
+      verse,
+      text,
+    });
+  }
   pane.append(label, verseText);
   return pane;
 }
@@ -573,6 +636,7 @@ function createCompareVerseRow({ bookId, chapter, verse, text }) {
   const id = bookmarkId(bookId, chapter, verse);
   const marked = state.bookmarks.has(id);
   const parallelTranslations = selectedParallelTranslations();
+  const bookName = selectedBook().name;
   const row = document.createElement("section");
   row.className = `verse-row compare-row${marked ? " marked" : ""}`;
 
@@ -586,7 +650,7 @@ function createCompareVerseRow({ bookId, chapter, verse, text }) {
 
   parallelTranslations.forEach((translation, index) => {
     const verseText = index === 0 ? text : findTranslationVerse(translation, bookId, chapter, verse)?.text;
-    body.append(createComparePane(translation, verseText));
+    body.append(createComparePane(translation, { bookName, chapter, verse, text: verseText }));
   });
 
   const save = document.createElement("button");

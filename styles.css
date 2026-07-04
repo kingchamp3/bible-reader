@@ -391,6 +391,14 @@ select {
   overflow-wrap: anywhere;
 }
 
+.copyable-verse {
+  cursor: copy;
+}
+
+.copyable-verse:hover {
+  color: var(--green);
+}
+
 .verse-ref {
   color: var(--gold);
   font-size: 13px;
