@@ -36,6 +36,7 @@ function createMember(name) {
     name,
     bookmarks: [],
     highlights: {},
+    textHighlights: {},
     notes: {},
     readChapters: [],
     lastRead: null,
@@ -74,6 +75,7 @@ const state = {
   signedInUser: null,
   bookmarks: new Set(),
   highlights: {},
+  textHighlights: {},
   notes: {},
   editingNoteId: null,
 };
@@ -193,6 +195,7 @@ function persistMembers() {
   const member = activeMember();
   member.bookmarks = [...state.bookmarks];
   member.highlights = { ...state.highlights };
+  member.textHighlights = { ...state.textHighlights };
   member.notes = { ...state.notes };
   const data = {
     activeMemberId: state.activeMemberId,
@@ -207,6 +210,7 @@ function loadActiveMember() {
   const member = activeMember();
   state.bookmarks = new Set(member.bookmarks || []);
   state.highlights = { ...(member.highlights || {}) };
+  state.textHighlights = { ...(member.textHighlights || {}) };
   state.notes = { ...(member.notes || {}) };
 }
 
@@ -234,6 +238,10 @@ function chapterProgressId(translationId, bookId, chapter) {
 
 function verseStorageId(translationId, bookId, chapter, verse) {
   return `${translationId}:${bookId}:${chapter}:${verse}`;
+}
+
+function textHighlightKey(translationId, verseId) {
+  return `${translationId}:${verseId}`;
 }
 
 function totalChapterCount(translation = selectedTranslation()) {
@@ -358,9 +366,20 @@ function favoriteVerses() {
 
 function highlightedVerses(color) {
   const translation = selectedTranslation();
-  return Object.entries(state.highlights)
-    .filter(([, highlightColor]) => highlightColor === color)
-    .map(([id]) => {
+  const ids = new Set(
+    Object.entries(state.highlights)
+      .filter(([, highlightColor]) => highlightColor === color)
+      .map(([id]) => id),
+  );
+  const partialPrefix = `${translation.id}:`;
+  Object.entries(state.textHighlights).forEach(([key, items]) => {
+    if (key.startsWith(partialPrefix) && items.some((item) => item.color === color)) {
+      ids.add(key.slice(partialPrefix.length));
+    }
+  });
+
+  return [...ids]
+    .map((id) => {
       const parsed = parseBookmarkId(id);
       const book = translation.books.find((item) => item.id === parsed.bookId);
       const chapter = book?.chapters.find((item) => item.chapter === parsed.chapter);
@@ -505,10 +524,70 @@ function toggleBookmark(bookId, chapter, verse) {
   renderVerses();
 }
 
+function closestVerseTextNode(node) {
+  const element = node?.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+  return element?.closest?.(".verse-text") || null;
+}
+
+function selectedVerseTextRange(verseId) {
+  const selection = window.getSelection();
+  if (!selection || selection.isCollapsed || selection.rangeCount === 0) return null;
+
+  const range = selection.getRangeAt(0);
+  const startBody = closestVerseTextNode(range.startContainer);
+  const endBody = closestVerseTextNode(range.endContainer);
+  if (!startBody || startBody !== endBody || startBody.dataset.verseId !== verseId) return null;
+
+  const before = document.createRange();
+  before.selectNodeContents(startBody);
+  before.setEnd(range.startContainer, range.startOffset);
+  const start = before.toString().length;
+  const selectedLength = range.toString().length;
+  if (selectedLength <= 0) return null;
+  return { start, end: start + selectedLength };
+}
+
+function mergeTextHighlights(items) {
+  return items
+    .filter((item) => item.end > item.start)
+    .sort((a, b) => a.start - b.start || a.end - b.end)
+    .reduce((merged, item) => {
+      const previous = merged[merged.length - 1];
+      if (previous && previous.color === item.color && item.start <= previous.end) {
+        previous.end = Math.max(previous.end, item.end);
+      } else {
+        merged.push({ ...item });
+      }
+      return merged;
+    }, []);
+}
+
+function setTextHighlight(translationId, verseId, range, color) {
+  const key = textHighlightKey(translationId, verseId);
+  const existing = state.textHighlights[key] || [];
+  if (color === "clear") {
+    const remaining = existing.filter((item) => item.end <= range.start || item.start >= range.end);
+    if (remaining.length) state.textHighlights[key] = remaining;
+    else delete state.textHighlights[key];
+  } else {
+    state.textHighlights[key] = mergeTextHighlights([...existing, { ...range, color }]);
+  }
+  window.getSelection()?.removeAllRanges();
+  persistMembers();
+  renderVerses();
+}
+
 function toggleHighlight(bookId, chapter, verse, color) {
   const id = bookmarkId(bookId, chapter, verse);
+  const range = selectedVerseTextRange(id);
+  if (range) {
+    setTextHighlight(state.selectedTranslationId, id, range, color);
+    return;
+  }
+
   if (state.highlights[id] === color || color === "clear") {
     delete state.highlights[id];
+    delete state.textHighlights[textHighlightKey(state.selectedTranslationId, id)];
   } else {
     state.highlights[id] = color;
   }
@@ -713,33 +792,51 @@ function attachCopyHandler(element, copyPayload) {
   });
 }
 
-function appendHighlightedText(element, text, query) {
-  if (!query) {
+function appendHighlightedText(element, text, query, textHighlights = []) {
+  const highlights = textHighlights.filter((item) => item.end > item.start);
+  if (!query && highlights.length === 0) {
     element.textContent = text;
     return;
   }
 
   const lowerText = text.toLowerCase();
-  const lowerQuery = query.toLowerCase();
-  let index = 0;
-  let matchIndex = lowerText.indexOf(lowerQuery, index);
-  if (matchIndex === -1) {
-    element.textContent = text;
-    return;
+  const lowerQuery = query?.toLowerCase() || "";
+  const queryRanges = [];
+  if (lowerQuery) {
+    let queryIndex = lowerText.indexOf(lowerQuery);
+    while (queryIndex !== -1) {
+      queryRanges.push({ start: queryIndex, end: queryIndex + query.length });
+      queryIndex = lowerText.indexOf(lowerQuery, queryIndex + query.length);
+    }
   }
 
-  while (matchIndex !== -1) {
-    if (matchIndex > index) {
-      element.append(document.createTextNode(text.slice(index, matchIndex)));
+  let index = 0;
+  while (index < text.length) {
+    const color = highlights.find((item) => index >= item.start && index < item.end)?.color || "";
+    const matchedQuery = queryRanges.some((item) => index >= item.start && index < item.end);
+    let end = index + 1;
+    while (end < text.length) {
+      const nextColor = highlights.find((item) => end >= item.start && end < item.end)?.color || "";
+      const nextQuery = queryRanges.some((item) => end >= item.start && end < item.end);
+      if (nextColor !== color || nextQuery !== matchedQuery) break;
+      end += 1;
     }
-    const mark = document.createElement("mark");
-    mark.textContent = text.slice(matchIndex, matchIndex + query.length);
-    element.append(mark);
-    index = matchIndex + query.length;
-    matchIndex = lowerText.indexOf(lowerQuery, index);
-  }
-  if (index < text.length) {
-    element.append(document.createTextNode(text.slice(index)));
+
+    const chunk = text.slice(index, end);
+    if (matchedQuery) {
+      const mark = document.createElement("mark");
+      mark.textContent = chunk;
+      if (color) mark.className = `text-highlight text-highlight-${color}`;
+      element.append(mark);
+    } else if (color) {
+      const span = document.createElement("span");
+      span.className = `text-highlight text-highlight-${color}`;
+      span.textContent = chunk;
+      element.append(span);
+    } else {
+      element.append(document.createTextNode(chunk));
+    }
+    index = end;
   }
 }
 
@@ -750,9 +847,15 @@ function applyHighlight(row, id) {
   }
 }
 
+function hasTextHighlightColor(verseId, color) {
+  const key = textHighlightKey(state.selectedTranslationId, verseId);
+  return (state.textHighlights[key] || []).some((item) => item.color === color);
+}
+
 function createVerseActions({ bookId, chapter, verse, marked }) {
   const actions = document.createElement("div");
   actions.className = "verse-actions";
+  const id = bookmarkId(bookId, chapter, verse);
 
   const save = document.createElement("button");
   save.type = "button";
@@ -774,7 +877,7 @@ function createVerseActions({ bookId, chapter, verse, marked }) {
     button.dataset.highlightColor = color;
     button.title = `${label} 형광펜`;
     button.setAttribute("aria-label", `${label} 형광펜`);
-    button.classList.toggle("active", state.highlights[bookmarkId(bookId, chapter, verse)] === color);
+    button.classList.toggle("active", state.highlights[id] === color || hasTextHighlightColor(id, color));
     button.addEventListener("click", () => toggleHighlight(bookId, chapter, verse, color));
     palette.append(button);
   });
@@ -867,7 +970,8 @@ function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult, 
 
   const body = document.createElement("div");
   body.className = "verse-text";
-  appendHighlightedText(body, text, searchQuery);
+  body.dataset.verseId = id;
+  appendHighlightedText(body, text, searchQuery, state.textHighlights[textHighlightKey(translation.id, id)] || []);
   attachCopyHandler(body, {
     translationName: translation.name,
     bookName: book.name,
