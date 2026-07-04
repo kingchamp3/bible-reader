@@ -81,6 +81,59 @@ const state = {
   lastTextSelection: null,
 };
 
+const recommendedDailyVerseRefs = [
+  ["john", 3, 16],
+  ["john", 14, 6],
+  ["john", 14, 27],
+  ["john", 15, 5],
+  ["john", 15, 7],
+  ["matthew", 5, 16],
+  ["matthew", 6, 33],
+  ["matthew", 11, 28],
+  ["matthew", 22, 37],
+  ["matthew", 28, 19],
+  ["mark", 10, 45],
+  ["luke", 6, 31],
+  ["luke", 11, 9],
+  ["acts", 1, 8],
+  ["acts", 4, 12],
+  ["romans", 1, 16],
+  ["romans", 5, 8],
+  ["romans", 8, 1],
+  ["romans", 8, 28],
+  ["romans", 12, 2],
+  ["1-corinthians", 10, 13],
+  ["1-corinthians", 13, 13],
+  ["2-corinthians", 5, 17],
+  ["2-corinthians", 12, 9],
+  ["galatians", 2, 20],
+  ["galatians", 5, 22],
+  ["ephesians", 2, 8],
+  ["ephesians", 3, 20],
+  ["ephesians", 6, 10],
+  ["philippians", 1, 6],
+  ["philippians", 4, 6],
+  ["philippians", 4, 7],
+  ["philippians", 4, 13],
+  ["philippians", 4, 19],
+  ["colossians", 3, 23],
+  ["1-thessalonians", 5, 16],
+  ["1-thessalonians", 5, 18],
+  ["2-timothy", 1, 7],
+  ["2-timothy", 3, 16],
+  ["hebrews", 4, 12],
+  ["hebrews", 11, 1],
+  ["hebrews", 12, 2],
+  ["james", 1, 5],
+  ["james", 1, 22],
+  ["1-peter", 5, 7],
+  ["1-john", 1, 9],
+  ["1-john", 4, 7],
+  ["1-john", 4, 18],
+  ["revelation", 3, 20],
+  ["revelation", 21, 4],
+];
+
 const els = {
   searchInput: document.querySelector("#searchInput"),
   googleLoginButton: document.querySelector("#googleLoginButton"),
@@ -397,7 +450,25 @@ function highlightedVerses(color) {
 }
 
 function dailyVerse() {
-  const verses = allVerses();
+  const translation = selectedTranslation();
+  const recommendedVerses = recommendedDailyVerseRefs
+    .map(([bookId, chapterNumber, verseNumber]) => {
+      const book = translation.books.find((item) => item.id === bookId);
+      const chapter = book?.chapters.find((item) => item.chapter === chapterNumber);
+      const verse = chapter?.verses.find((item) => item.verse === verseNumber);
+      if (!book || !chapter || !verse) return null;
+      return {
+        ...verse,
+        bookId: book.id,
+        bookName: book.name,
+        chapter: chapter.chapter,
+      };
+    })
+    .filter(Boolean);
+  const verses = recommendedVerses.length ? recommendedVerses : allVerses().filter((verse) => {
+    const book = translation.books.find((item) => item.id === verse.bookId);
+    return book?.testament === "new";
+  });
   const today = new Date();
   const seed = Number(
     `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(today.getDate()).padStart(2, "0")}`,
