@@ -528,6 +528,27 @@ textarea {
   padding: 0 2px;
 }
 
+.text-highlight {
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
+.text-highlight-yellow {
+  background: var(--highlight-yellow);
+}
+
+.text-highlight-green {
+  background: var(--highlight-green);
+}
+
+.text-highlight-pink {
+  background: var(--highlight-pink);
+}
+
+.text-highlight-blue {
+  background: var(--highlight-blue);
+}
+
 .verse-note {
   background: rgba(146, 120, 77, 0.1);
   border-left: 3px solid var(--gold);
