@@ -213,6 +213,7 @@ textarea {
 .daily-card,
 .popular-card,
 .gratitude-card,
+.devotional-card,
 .highlight-filter,
 .reading-plan {
   background: var(--panel);
@@ -226,6 +227,7 @@ textarea {
 .daily-card span,
 .popular-card span,
 .gratitude-card span,
+.devotional-card > span,
 .highlight-filter span,
 .reading-plan span {
   color: var(--muted);
@@ -312,6 +314,88 @@ textarea {
 .gratitude-note small {
   color: var(--muted);
   font-size: 12px;
+}
+
+.devotional-form {
+  display: grid;
+  gap: 9px;
+}
+
+.devotional-form label {
+  display: grid;
+  gap: 5px;
+}
+
+.devotional-form small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.devotional-form button,
+.devotional-card button {
+  background: var(--green);
+  border: 0;
+  border-radius: 8px;
+  color: var(--panel);
+  font-weight: 900;
+  min-height: 38px;
+}
+
+#useCurrentPassageButton {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.devotional-status {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.devotional-list {
+  display: grid;
+  gap: 8px;
+}
+
+.devotional-note {
+  background: var(--green-soft);
+  border-radius: 8px;
+  color: var(--green);
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+}
+
+.devotional-note header {
+  display: grid;
+  gap: 2px;
+}
+
+.devotional-note strong {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.devotional-note small,
+.devotional-note p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.devotional-note-actions {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.devotional-note-actions button {
+  background: var(--panel);
+  color: var(--green);
+  min-height: 32px;
 }
 
 .highlight-filter div {
