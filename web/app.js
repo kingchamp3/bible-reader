@@ -1,4 +1,5 @@
 const bibleBundle = window.BIBLE_TRANSLATIONS;
+const sblgntLoader = window.BIBLE_SBLGNT_LOADER;
 const searchLimit = 300;
 const memberStorageKey = "bibleReaderMembers";
 const legacyBookmarkKey = "malsseumgilBookmarks";
@@ -29,6 +30,10 @@ if (!bibleBundle?.translations?.length) {
       '<p class="empty">web 폴더 안의 index.html, app.js, styles.css, bibles-data.js 파일이 함께 있어야 합니다.</p>';
   }
   throw new Error("BIBLE_TRANSLATIONS is missing.");
+}
+
+if (sblgntLoader && !bibleBundle.translations.some((translation) => translation.id === "sblgnt")) {
+  bibleBundle.translations.push(sblgntLoader.placeholder());
 }
 
 function createMember(name) {
@@ -206,6 +211,37 @@ function selectedTranslation() {
     bibleBundle.translations.find((translation) => translation.id === state.selectedTranslationId) ||
     bibleBundle.translations[0]
   );
+}
+
+async function ensureTranslationLoaded(translationId) {
+  const current = bibleBundle.translations.find((translation) => translation.id === translationId);
+  if (!current?.loading || !sblgntLoader?.load) return current || selectedTranslation();
+
+  els.readerTitle.textContent = "SBLGNT 원문을 불러오는 중";
+  els.readerMeta.textContent = "공식 SBLGNT GitHub 원문";
+  els.verseList.innerHTML = '<p class="empty">헬라어 원문을 준비하고 있습니다.</p>';
+
+  try {
+    const loaded = await sblgntLoader.load();
+    const index = bibleBundle.translations.findIndex((translation) => translation.id === loaded.id);
+    if (index >= 0) {
+      bibleBundle.translations[index] = loaded;
+    } else {
+      bibleBundle.translations.push(loaded);
+    }
+    return loaded;
+  } catch (error) {
+    els.readerTitle.textContent = "SBLGNT 원문을 불러오지 못했습니다";
+    els.readerMeta.textContent = "네트워크 연결을 확인해 주세요";
+    els.verseList.innerHTML = `<p class="empty">${error?.message || "SBLGNT 원문 로드 실패"}</p>`;
+    throw error;
+  }
+}
+
+async function ensureVisibleTranslationsLoaded() {
+  await ensureTranslationLoaded(state.selectedTranslationId);
+  if (!state.compareMode) return;
+  await Promise.all([state.compareTranslationId, state.compareTranslationId2].map((id) => ensureTranslationLoaded(id)));
 }
 
 function defaultCompareTranslationIds() {
@@ -593,9 +629,8 @@ function subscribeAuthChanges() {
   });
 }
 
-function setTranslation(translationId) {
-  const nextTranslation =
-    bibleBundle.translations.find((translation) => translation.id === translationId) || selectedTranslation();
+async function setTranslation(translationId) {
+  const nextTranslation = await ensureTranslationLoaded(translationId);
   const nextBook = nextTranslation.books.find((book) => book.id === state.selectedBookId) || nextTranslation.books[0];
   const nextChapter =
     nextBook.chapters.find((chapter) => chapter.chapter === state.selectedChapter) || nextBook.chapters[0];
@@ -1606,7 +1641,8 @@ function render() {
   renderVerses();
 }
 
-function renderAfterCompareSelection() {
+async function renderAfterCompareSelection() {
+  await ensureVisibleTranslationsLoaded();
   selectedParallelTranslations();
   renderCompareTranslationSelect();
   renderSourceAttribution();
@@ -1614,14 +1650,16 @@ function renderAfterCompareSelection() {
   renderVerses();
 }
 
-els.translationSelect.addEventListener("change", (event) => setTranslation(event.target.value));
-els.compareTranslationSelect.addEventListener("change", (event) => {
-  state.compareTranslationId = event.target.value;
-  renderAfterCompareSelection();
+els.translationSelect.addEventListener("change", async (event) => {
+  await setTranslation(event.target.value);
 });
-els.compareTranslationSelect2.addEventListener("change", (event) => {
+els.compareTranslationSelect.addEventListener("change", async (event) => {
+  state.compareTranslationId = event.target.value;
+  await renderAfterCompareSelection();
+});
+els.compareTranslationSelect2.addEventListener("change", async (event) => {
   state.compareTranslationId2 = event.target.value;
-  renderAfterCompareSelection();
+  await renderAfterCompareSelection();
 });
 els.googleLoginButton.addEventListener("click", () => {
   authService.login().catch((error) => {
@@ -1702,11 +1740,12 @@ els.favoritesToggle.addEventListener("click", () => {
   renderHeader();
   renderVerses();
 });
-els.compareToggle.addEventListener("click", () => {
+els.compareToggle.addEventListener("click", async () => {
   state.compareMode = !state.compareMode;
   state.showFavorites = false;
   state.highlightFilter = null;
   els.searchInput.value = "";
+  await ensureVisibleTranslationsLoaded();
   renderSourceAttribution();
   renderHeader();
   renderVerses();
