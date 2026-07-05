@@ -511,9 +511,14 @@ function switchMember(memberId) {
 }
 
 function renderMemberPanel() {
-  els.memberSelect.innerHTML = state.members
-    .map((member) => `<option value="${member.id}">${member.name}</option>`)
-    .join("");
+  els.memberSelect.replaceChildren(
+    ...state.members.map((member) => {
+      const option = document.createElement("option");
+      option.value = member.id;
+      option.textContent = member.name;
+      return option;
+    }),
+  );
   els.memberSelect.value = state.activeMemberId;
 }
 
@@ -744,18 +749,28 @@ function saveVerseNote(id, value) {
 }
 
 function renderTranslationSelect() {
-  els.translationSelect.innerHTML = bibleBundle.translations
-    .map((translation) => `<option value="${translation.id}">${translation.name}</option>`)
-    .join("");
+  els.translationSelect.replaceChildren(
+    ...bibleBundle.translations.map((translation) => {
+      const option = document.createElement("option");
+      option.value = translation.id;
+      option.textContent = translation.name;
+      return option;
+    }),
+  );
   els.translationSelect.value = state.selectedTranslationId;
 }
 
 function renderCompareTranslationSelect() {
   selectedParallelTranslations();
-  els.compareTranslationSelect.innerHTML = bibleBundle.translations
-    .map((translation) => `<option value="${translation.id}">${translation.name}</option>`)
-    .join("");
-  els.compareTranslationSelect2.innerHTML = els.compareTranslationSelect.innerHTML;
+  const createOptions = () =>
+    bibleBundle.translations.map((translation) => {
+      const option = document.createElement("option");
+      option.value = translation.id;
+      option.textContent = translation.name;
+      return option;
+    });
+  els.compareTranslationSelect.replaceChildren(...createOptions());
+  els.compareTranslationSelect2.replaceChildren(...createOptions());
   els.compareTranslationSelect.value = state.compareTranslationId;
   els.compareTranslationSelect2.value = state.compareTranslationId2;
   els.compareTranslationSelect.disabled = bibleBundle.translations.length < 2;
@@ -883,17 +898,27 @@ function renderReadingPlan() {
 
 function renderBookSelect() {
   const translation = selectedTranslation();
-  els.bookSelect.innerHTML = translation.books
-    .map((book) => `<option value="${book.id}">${book.name}</option>`)
-    .join("");
+  els.bookSelect.replaceChildren(
+    ...translation.books.map((book) => {
+      const option = document.createElement("option");
+      option.value = book.id;
+      option.textContent = book.name;
+      return option;
+    }),
+  );
   els.bookSelect.value = state.selectedBookId;
 }
 
 function renderChapterSelect() {
   const book = selectedBook();
-  els.chapterSelect.innerHTML = book.chapters
-    .map((chapter) => `<option value="${chapter.chapter}">${chapter.chapter}장</option>`)
-    .join("");
+  els.chapterSelect.replaceChildren(
+    ...book.chapters.map((chapter) => {
+      const option = document.createElement("option");
+      option.value = chapter.chapter;
+      option.textContent = `${chapter.chapter}장`;
+      return option;
+    }),
+  );
   els.chapterSelect.value = state.selectedChapter;
 }
 

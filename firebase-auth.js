@@ -99,7 +99,6 @@ window.BIBLE_READER_AUTH_READY = (async () => {
         await addDoc(collection(db, "gratitudeNotes"), {
           text: trimmed,
           name: auth.currentUser.displayName || auth.currentUser.email || "익명",
-          uid: auth.currentUser.uid,
           createdAt: serverTimestamp(),
         });
       },
