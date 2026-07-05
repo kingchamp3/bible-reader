@@ -39,6 +39,7 @@ function createMember(name) {
     highlights: {},
     textHighlights: {},
     notes: {},
+    devotionalNotes: {},
     readChapters: [],
     lastRead: null,
   };
@@ -78,6 +79,7 @@ const state = {
   highlights: {},
   textHighlights: {},
   notes: {},
+  devotionalNotes: {},
   editingNoteId: null,
   lastTextSelection: null,
   gratitudeNotes: [],
@@ -166,6 +168,15 @@ const els = {
   gratitudeInput: document.querySelector("#gratitudeInput"),
   gratitudeStatus: document.querySelector("#gratitudeStatus"),
   gratitudeList: document.querySelector("#gratitudeList"),
+  devotionalForm: document.querySelector("#devotionalForm"),
+  devotionalDate: document.querySelector("#devotionalDate"),
+  devotionalPassage: document.querySelector("#devotionalPassage"),
+  devotionalInsight: document.querySelector("#devotionalInsight"),
+  devotionalPrayer: document.querySelector("#devotionalPrayer"),
+  devotionalAction: document.querySelector("#devotionalAction"),
+  devotionalStatus: document.querySelector("#devotionalStatus"),
+  devotionalList: document.querySelector("#devotionalList"),
+  useCurrentPassageButton: document.querySelector("#useCurrentPassageButton"),
   translationSelect: document.querySelector("#translationSelect"),
   compareTranslationSelect: document.querySelector("#compareTranslationSelect"),
   compareTranslationSelect2: document.querySelector("#compareTranslationSelect2"),
@@ -272,6 +283,7 @@ function persistMembers() {
   member.highlights = { ...state.highlights };
   member.textHighlights = { ...state.textHighlights };
   member.notes = { ...state.notes };
+  member.devotionalNotes = { ...state.devotionalNotes };
   const data = {
     activeMemberId: state.activeMemberId,
     members: state.members,
@@ -287,6 +299,7 @@ function loadActiveMember() {
   state.highlights = { ...(member.highlights || {}) };
   state.textHighlights = { ...(member.textHighlights || {}) };
   state.notes = { ...(member.notes || {}) };
+  state.devotionalNotes = { ...(member.devotionalNotes || {}) };
 }
 
 function allVerses() {
@@ -339,6 +352,16 @@ function currentLocation() {
     bookName: book.name,
     chapter: chapter.chapter,
   };
+}
+
+function todayDateInputValue() {
+  const today = new Date();
+  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+}
+
+function currentPassageLabel() {
+  const location = currentLocation();
+  return `${location.bookName} ${location.chapter}장`;
 }
 
 function currentChapterProgressId() {
@@ -881,6 +904,120 @@ async function submitGratitudeNote(event) {
   }
 }
 
+function devotionalValues() {
+  return {
+    date: els.devotionalDate.value || todayDateInputValue(),
+    passage: els.devotionalPassage.value.trim(),
+    insight: els.devotionalInsight.value.trim(),
+    prayer: els.devotionalPrayer.value.trim(),
+    action: els.devotionalAction.value.trim(),
+  };
+}
+
+function clearDevotionalForm() {
+  els.devotionalDate.value = todayDateInputValue();
+  els.devotionalPassage.value = currentPassageLabel();
+  els.devotionalInsight.value = "";
+  els.devotionalPrayer.value = "";
+  els.devotionalAction.value = "";
+}
+
+function fillDevotionalForm(note) {
+  els.devotionalDate.value = note.date || todayDateInputValue();
+  els.devotionalPassage.value = note.passage || "";
+  els.devotionalInsight.value = note.insight || "";
+  els.devotionalPrayer.value = note.prayer || "";
+  els.devotionalAction.value = note.action || "";
+}
+
+function saveDevotionalNote(event) {
+  event.preventDefault();
+  const next = devotionalValues();
+  if (!next.insight && !next.prayer && !next.action) {
+    els.devotionalStatus.textContent = "깨달은 점, 기도 제목, 적용할 점 중 하나를 적어 주세요.";
+    return;
+  }
+
+  const previous = state.devotionalNotes[next.date] || {};
+  state.devotionalNotes[next.date] = {
+    ...previous,
+    ...next,
+    passage: next.passage || currentPassageLabel(),
+    updatedAt: new Date().toISOString(),
+  };
+  persistMembers();
+  els.devotionalStatus.textContent = `${next.date} 묵상 노트를 저장했습니다.`;
+  renderDevotionalList();
+}
+
+function editDevotionalNote(date) {
+  const note = state.devotionalNotes[date];
+  if (!note) return;
+  fillDevotionalForm(note);
+  els.devotionalStatus.textContent = `${date} 묵상 노트를 편집 중입니다.`;
+}
+
+function deleteDevotionalNote(date) {
+  if (!window.confirm(`${date} 묵상 노트를 삭제할까요?`)) return;
+  delete state.devotionalNotes[date];
+  persistMembers();
+  if (els.devotionalDate.value === date) {
+    clearDevotionalForm();
+  }
+  els.devotionalStatus.textContent = `${date} 묵상 노트를 삭제했습니다.`;
+  renderDevotionalList();
+}
+
+function renderDevotionalList() {
+  const notes = Object.values(state.devotionalNotes || {}).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  els.devotionalList.innerHTML = "";
+
+  if (notes.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "devotional-status";
+    empty.textContent = "아직 저장된 묵상 노트가 없습니다.";
+    els.devotionalList.append(empty);
+    return;
+  }
+
+  notes.slice(0, 8).forEach((note) => {
+    const article = document.createElement("article");
+    article.className = "devotional-note";
+
+    const header = document.createElement("header");
+    const date = document.createElement("strong");
+    date.textContent = note.date || "날짜 없음";
+    const passage = document.createElement("small");
+    passage.textContent = note.passage || "본문 없음";
+    header.append(date, passage);
+
+    const summary = document.createElement("p");
+    summary.textContent = note.insight || note.prayer || note.action || "내용 없음";
+
+    const actions = document.createElement("div");
+    actions.className = "devotional-note-actions";
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.textContent = "편집";
+    edit.addEventListener("click", () => editDevotionalNote(note.date));
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.textContent = "삭제";
+    remove.addEventListener("click", () => deleteDevotionalNote(note.date));
+    actions.append(edit, remove);
+
+    article.append(header, summary, actions);
+    els.devotionalList.append(article);
+  });
+}
+
+function renderDevotionalPanel() {
+  if (!els.devotionalDate.value) {
+    clearDevotionalForm();
+  }
+  renderDevotionalList();
+}
+
 function renderReadingPlan() {
   const translation = selectedTranslation();
   const book = selectedBook();
@@ -1418,6 +1555,7 @@ function render() {
   renderDailyVerse();
   renderPopularVerses();
   renderGratitudePanel();
+  renderDevotionalPanel();
   renderHeader();
   renderVerses();
 }
@@ -1534,6 +1672,11 @@ els.highlightFilter.addEventListener("click", (event) => {
   renderVerses();
 });
 els.gratitudeForm.addEventListener("submit", submitGratitudeNote);
+els.devotionalForm.addEventListener("submit", saveDevotionalNote);
+els.useCurrentPassageButton.addEventListener("click", () => {
+  els.devotionalPassage.value = currentPassageLabel();
+  els.devotionalStatus.textContent = "현재 읽는 본문을 넣었습니다.";
+});
 
 document.addEventListener("selectionchange", captureTextSelection);
 

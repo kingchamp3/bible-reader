@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>성경을 읽다 - 성경 번역본</title>
-    <link rel="stylesheet" href="./styles.css?v=community-gratitude-v1" />
+    <link rel="stylesheet" href="./styles.css?v=devotional-notes-v1" />
   </head>
   <body>
     <main class="app-shell">
@@ -53,6 +53,36 @@
           </form>
           <p id="gratitudeStatus" class="gratitude-status"></p>
           <div id="gratitudeList" class="gratitude-list"></div>
+        </section>
+
+        <section class="devotional-card" aria-label="묵상 노트">
+          <span>묵상 노트</span>
+          <form id="devotionalForm" class="devotional-form">
+            <label>
+              <small>날짜</small>
+              <input id="devotionalDate" type="date" />
+            </label>
+            <label>
+              <small>오늘 읽은 본문</small>
+              <input id="devotionalPassage" type="text" placeholder="예: 요한복음 3장" />
+            </label>
+            <button id="useCurrentPassageButton" type="button">현재 본문 넣기</button>
+            <label>
+              <small>깨달은 점</small>
+              <textarea id="devotionalInsight" rows="3" placeholder="말씀을 통해 깨달은 점"></textarea>
+            </label>
+            <label>
+              <small>기도 제목</small>
+              <textarea id="devotionalPrayer" rows="3" placeholder="기도로 올려드릴 제목"></textarea>
+            </label>
+            <label>
+              <small>적용할 점</small>
+              <textarea id="devotionalAction" rows="3" placeholder="오늘 삶에서 실천할 한 가지"></textarea>
+            </label>
+            <button type="submit">묵상 저장</button>
+          </form>
+          <p id="devotionalStatus" class="devotional-status"></p>
+          <div id="devotionalList" class="devotional-list"></div>
         </section>
 
         <label class="search-box">
@@ -142,6 +172,6 @@
     <script src="./firebase-config-9ec46.js"></script>
     <script type="module" src="./firebase-auth.js?v=security-audit-v1"></script>
     <script src="./bibles-data.js?v=community-gratitude-v1"></script>
-    <script type="module" src="./app.js?v=security-audit-v1"></script>
+    <script type="module" src="./app.js?v=devotional-notes-v1"></script>
   </body>
 </html>
