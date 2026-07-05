@@ -180,6 +180,7 @@ const els = {
   translationSelect: document.querySelector("#translationSelect"),
   compareTranslationSelect: document.querySelector("#compareTranslationSelect"),
   compareTranslationSelect2: document.querySelector("#compareTranslationSelect2"),
+  sourceAttribution: document.querySelector("#sourceAttribution"),
   bookSelect: document.querySelector("#bookSelect"),
   chapterSelect: document.querySelector("#chapterSelect"),
   bookList: document.querySelector("#bookList"),
@@ -1060,19 +1061,63 @@ function renderChapterSelect() {
 }
 
 function renderTabs() {
+  const translation = selectedTranslation();
+  const hasOld = translation.books.some((book) => book.testament === "old");
+  const hasNew = translation.books.some((book) => book.testament === "new");
   els.oldTab.classList.toggle("active", state.activeTestament === "old");
   els.newTab.classList.toggle("active", state.activeTestament === "new");
+  els.oldTab.disabled = !hasOld;
+  els.newTab.disabled = !hasNew;
 }
 
 function renderBookButtons() {
   const translation = selectedTranslation();
   const books = translation.books.filter((book) => book.testament === state.activeTestament);
-  els.bookList.innerHTML = books
-    .map(
-      (book) =>
-        `<button type="button" class="${book.id === state.selectedBookId ? "active" : ""}" data-book-id="${book.id}">${book.name}</button>`,
-    )
-    .join("");
+  if (!books.length) {
+    els.bookList.textContent = state.activeTestament === "old" ? "구약 원어 데이터는 준비 중입니다." : "표시할 성경이 없습니다.";
+    return;
+  }
+
+  els.bookList.replaceChildren(
+    ...books.map((book) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = book.id === state.selectedBookId ? "active" : "";
+      button.dataset.bookId = book.id;
+      button.textContent = book.name;
+      return button;
+    }),
+  );
+}
+
+function renderSourceAttribution() {
+  const visibleTranslations = state.compareMode
+    ? selectedParallelTranslations()
+    : [selectedTranslation()];
+  const sourceTranslations = visibleTranslations.filter((translation) => translation.source);
+  const uniqueSources = [...new Map(sourceTranslations.map((translation) => [translation.id, translation])).values()];
+  if (!uniqueSources.length) {
+    els.sourceAttribution.hidden = true;
+    els.sourceAttribution.replaceChildren();
+    return;
+  }
+
+  const title = document.createElement("span");
+  title.textContent = "원문 출처";
+  const items = uniqueSources.map((translation) => {
+    const source = translation.source;
+    const paragraph = document.createElement("p");
+    const link = document.createElement("a");
+    link.href = source.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = source.title;
+    paragraph.append(link, ` · ${source.license} · ${source.copyright}`);
+    return paragraph;
+  });
+
+  els.sourceAttribution.hidden = false;
+  els.sourceAttribution.replaceChildren(title, ...items);
 }
 
 function renderHeader() {
@@ -1552,6 +1597,7 @@ function render() {
   renderChapterSelect();
   renderTabs();
   renderBookButtons();
+  renderSourceAttribution();
   renderDailyVerse();
   renderPopularVerses();
   renderGratitudePanel();
@@ -1563,6 +1609,7 @@ function render() {
 function renderAfterCompareSelection() {
   selectedParallelTranslations();
   renderCompareTranslationSelect();
+  renderSourceAttribution();
   renderHeader();
   renderVerses();
 }
@@ -1606,11 +1653,13 @@ els.chapterReadToggle.addEventListener("click", toggleCurrentChapterRead);
 els.bookSelect.addEventListener("change", (event) => setBook(event.target.value));
 els.chapterSelect.addEventListener("change", (event) => setChapter(event.target.value));
 els.oldTab.addEventListener("click", () => {
+  if (!selectedTranslation().books.some((book) => book.testament === "old")) return;
   state.activeTestament = "old";
   renderTabs();
   renderBookButtons();
 });
 els.newTab.addEventListener("click", () => {
+  if (!selectedTranslation().books.some((book) => book.testament === "new")) return;
   state.activeTestament = "new";
   renderTabs();
   renderBookButtons();
@@ -1658,6 +1707,7 @@ els.compareToggle.addEventListener("click", () => {
   state.showFavorites = false;
   state.highlightFilter = null;
   els.searchInput.value = "";
+  renderSourceAttribution();
   renderHeader();
   renderVerses();
 });
