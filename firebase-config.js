@@ -1,8 +1,9 @@
 window.FIREBASE_CONFIG = {
-  apiKey: "AIzaSyBAQgvPcJCeGYZGQP1iCKn-Vlt4vNMjHIE",
-  authDomain: "bible-6c22b.firebaseapp.com",
-  projectId: "bible-6c22b",
-  storageBucket: "bible-6c22b.firebasestorage.app",
-  messagingSenderId: "104281547525",
-  appId: "1:104281547525:web:87bb3c204bbb04edb94d6c",
+  apiKey: "AIzaSyDOyMjBDYhflclTePn7Dfxxcw65xlrqbhQ",
+  authDomain: "bible-9ec46.firebaseapp.com",
+  projectId: "bible-9ec46",
+  storageBucket: "bible-9ec46.firebasestorage.app",
+  messagingSenderId: "302546089169",
+  appId: "1:302546089169:web:190ada5b7beb73f78f81f0",
+  measurementId: "G-5277Q2TX28",
 };
