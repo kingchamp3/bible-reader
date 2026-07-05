@@ -10,6 +10,7 @@ window.BIBLE_READER_AUTH_READY?.then((service) => {
   authService = service || window.BIBLE_READER_AUTH;
   renderAuthPanel();
   subscribeAuthChanges();
+  loadGratitudeNotes();
 }).catch((error) => {
   window.BIBLE_READER_AUTH_ERROR = error?.message || "Google 로그인 준비 중 오류가 발생했습니다.";
   renderAuthPanel();
@@ -79,6 +80,8 @@ const state = {
   notes: {},
   editingNoteId: null,
   lastTextSelection: null,
+  gratitudeNotes: [],
+  gratitudeStatus: "",
 };
 
 const recommendedDailyVerseRefs = [
@@ -134,6 +137,19 @@ const recommendedDailyVerseRefs = [
   ["revelation", 21, 4],
 ];
 
+const popularVerseRefs = [
+  ["john", 3, 16],
+  ["matthew", 11, 28],
+  ["romans", 8, 28],
+  ["philippians", 4, 6],
+  ["philippians", 4, 13],
+  ["ephesians", 2, 8],
+  ["2-corinthians", 5, 17],
+  ["1-corinthians", 13, 13],
+  ["1-peter", 5, 7],
+  ["revelation", 21, 4],
+];
+
 const els = {
   searchInput: document.querySelector("#searchInput"),
   googleLoginButton: document.querySelector("#googleLoginButton"),
@@ -145,6 +161,11 @@ const els = {
   lastReadButton: document.querySelector("#lastReadButton"),
   chapterReadToggle: document.querySelector("#chapterReadToggle"),
   dailyVerseButton: document.querySelector("#dailyVerseButton"),
+  popularVerseList: document.querySelector("#popularVerseList"),
+  gratitudeForm: document.querySelector("#gratitudeForm"),
+  gratitudeInput: document.querySelector("#gratitudeInput"),
+  gratitudeStatus: document.querySelector("#gratitudeStatus"),
+  gratitudeList: document.querySelector("#gratitudeList"),
   translationSelect: document.querySelector("#translationSelect"),
   compareTranslationSelect: document.querySelector("#compareTranslationSelect"),
   compareTranslationSelect2: document.querySelector("#compareTranslationSelect2"),
@@ -536,7 +557,10 @@ function subscribeAuthChanges() {
     } else {
       cloudStatus = "idle";
       cloudSaveDisabled = false;
+      state.gratitudeStatus = "Google 로그인 후 감사 한줄을 나눌 수 있습니다.";
+      renderGratitudePanel();
     }
+    loadGratitudeNotes();
   });
 }
 
@@ -759,6 +783,87 @@ function renderDailyVerse() {
   els.dailyVerseButton.onclick = () => {
     setBook(verse.bookId, verse.chapter);
   };
+}
+
+function renderPopularVerses() {
+  const translation = selectedTranslation();
+  els.popularVerseList.innerHTML = "";
+  popularVerseRefs
+    .map((ref) => verseFromRef(translation, ref))
+    .filter(Boolean)
+    .forEach((verse) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      const ref = document.createElement("strong");
+      ref.textContent = `${verse.bookName} ${verse.chapter}:${verse.verse}`;
+      const text = document.createElement("small");
+      text.textContent = verse.text.length > 42 ? `${verse.text.slice(0, 42)}...` : verse.text;
+      button.append(ref, text);
+      button.addEventListener("click", () => setBook(verse.bookId, verse.chapter));
+      els.popularVerseList.append(button);
+    });
+}
+
+function renderGratitudePanel() {
+  els.gratitudeStatus.textContent = state.gratitudeStatus || "";
+  els.gratitudeList.innerHTML = "";
+  if (state.gratitudeNotes.length === 0) {
+    const empty = document.createElement("p");
+    empty.className = "gratitude-status";
+    empty.textContent = "아직 나눠진 감사가 없습니다.";
+    els.gratitudeList.append(empty);
+    return;
+  }
+
+  state.gratitudeNotes.forEach((item) => {
+    const note = document.createElement("article");
+    note.className = "gratitude-note";
+    const text = document.createElement("p");
+    text.textContent = item.text || "";
+    const meta = document.createElement("small");
+    meta.textContent = item.name ? `${item.name}의 감사` : "감사 나눔";
+    note.append(text, meta);
+    els.gratitudeList.append(note);
+  });
+}
+
+async function loadGratitudeNotes() {
+  if (!authService?.enabled || !authService.loadGratitudeNotes) {
+    state.gratitudeStatus = "공유 기능을 준비 중입니다.";
+    renderGratitudePanel();
+    return;
+  }
+  try {
+    state.gratitudeStatus = "감사 한줄을 불러오는 중";
+    renderGratitudePanel();
+    state.gratitudeNotes = await withTimeout(authService.loadGratitudeNotes(), cloudTimeoutMs);
+    state.gratitudeStatus = state.signedInUser ? "감사 한줄을 나눌 수 있습니다." : "Google 로그인 후 감사 한줄을 나눌 수 있습니다.";
+    renderGratitudePanel();
+  } catch {
+    state.gratitudeStatus = "감사 한줄을 불러오지 못했습니다. Firestore 권한을 확인해 주세요.";
+    renderGratitudePanel();
+  }
+}
+
+async function submitGratitudeNote(event) {
+  event.preventDefault();
+  const text = els.gratitudeInput.value.trim();
+  if (!text) return;
+  if (!state.signedInUser) {
+    state.gratitudeStatus = "Google 로그인 후 감사 한줄을 나눌 수 있습니다.";
+    renderGratitudePanel();
+    return;
+  }
+  try {
+    state.gratitudeStatus = "감사 한줄을 저장하는 중";
+    renderGratitudePanel();
+    await withTimeout(authService.saveGratitudeNote(text), cloudTimeoutMs);
+    els.gratitudeInput.value = "";
+    await loadGratitudeNotes();
+  } catch {
+    state.gratitudeStatus = "감사 한줄 저장에 실패했습니다. Firestore 규칙을 확인해 주세요.";
+    renderGratitudePanel();
+  }
 }
 
 function renderReadingPlan() {
@@ -1110,6 +1215,19 @@ function findTranslationVerse(translation, bookId, chapterNumber, verseNumber) {
   return chapter?.verses.find((item) => item.verse === verseNumber);
 }
 
+function verseFromRef(translation, [bookId, chapterNumber, verseNumber]) {
+  const book = translation.books.find((item) => item.id === bookId);
+  const chapter = book?.chapters.find((item) => item.chapter === chapterNumber);
+  const verse = chapter?.verses.find((item) => item.verse === verseNumber);
+  if (!book || !chapter || !verse) return null;
+  return {
+    ...verse,
+    bookId: book.id,
+    bookName: book.name,
+    chapter: chapter.chapter,
+  };
+}
+
 function createComparePane(translation, { bookName, chapter, verse, text }) {
   const pane = document.createElement("div");
   pane.className = "compare-pane";
@@ -1273,6 +1391,8 @@ function render() {
   renderTabs();
   renderBookButtons();
   renderDailyVerse();
+  renderPopularVerses();
+  renderGratitudePanel();
   renderHeader();
   renderVerses();
 }
@@ -1388,6 +1508,7 @@ els.highlightFilter.addEventListener("click", (event) => {
   renderHeader();
   renderVerses();
 });
+els.gratitudeForm.addEventListener("submit", submitGratitudeNote);
 
 document.addEventListener("selectionchange", captureTextSelection);
 
@@ -1396,3 +1517,4 @@ persistMembers();
 render();
 saveBookmarks();
 subscribeAuthChanges();
+loadGratitudeNotes();
