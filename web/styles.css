@@ -694,6 +694,18 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+.verse-text[dir="rtl"],
+.compare-pane p[dir="rtl"] {
+  font-family:
+    "SBL Hebrew",
+    "Ezra SIL",
+    "Times New Roman",
+    serif;
+  letter-spacing: 0;
+  text-align: right;
+  unicode-bidi: plaintext;
+}
+
 .verse-content {
   display: grid;
   gap: 10px;

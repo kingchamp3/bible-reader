@@ -1,5 +1,8 @@
 const bibleBundle = window.BIBLE_TRANSLATIONS;
-const sblgntLoader = window.BIBLE_SBLGNT_LOADER;
+const originalLoaders = {
+  sblgnt: window.BIBLE_SBLGNT_LOADER,
+  wlc: window.BIBLE_HEBREW_LOADER,
+};
 const searchLimit = 300;
 const memberStorageKey = "bibleReaderMembers";
 const legacyBookmarkKey = "malsseumgilBookmarks";
@@ -32,9 +35,11 @@ if (!bibleBundle?.translations?.length) {
   throw new Error("BIBLE_TRANSLATIONS is missing.");
 }
 
-if (sblgntLoader && !bibleBundle.translations.some((translation) => translation.id === "sblgnt")) {
-  bibleBundle.translations.push(sblgntLoader.placeholder());
-}
+Object.entries(originalLoaders).forEach(([translationId, loader]) => {
+  if (loader && !bibleBundle.translations.some((translation) => translation.id === translationId)) {
+    bibleBundle.translations.push(loader.placeholder());
+  }
+});
 
 function createMember(name) {
   return {
@@ -215,14 +220,15 @@ function selectedTranslation() {
 
 async function ensureTranslationLoaded(translationId) {
   const current = bibleBundle.translations.find((translation) => translation.id === translationId);
-  if (!current?.loading || !sblgntLoader?.load) return current || selectedTranslation();
+  const loader = originalLoaders[translationId];
+  if (!current?.loading || !loader?.load) return current || selectedTranslation();
 
-  els.readerTitle.textContent = "SBLGNT 원문을 불러오는 중";
-  els.readerMeta.textContent = "공식 SBLGNT GitHub 원문";
-  els.verseList.innerHTML = '<p class="empty">헬라어 원문을 준비하고 있습니다.</p>';
+  els.readerTitle.textContent = `${current.name}을 불러오는 중`;
+  els.readerMeta.textContent = current.source?.title || "공식 원문 데이터";
+  els.verseList.innerHTML = `<p class="empty">${current.name}을 준비하고 있습니다.</p>`;
 
   try {
-    const loaded = await sblgntLoader.load();
+    const loaded = await loader.load();
     const index = bibleBundle.translations.findIndex((translation) => translation.id === loaded.id);
     if (index >= 0) {
       bibleBundle.translations[index] = loaded;
@@ -231,9 +237,9 @@ async function ensureTranslationLoaded(translationId) {
     }
     return loaded;
   } catch (error) {
-    els.readerTitle.textContent = "SBLGNT 원문을 불러오지 못했습니다";
+    els.readerTitle.textContent = `${current.name}을 불러오지 못했습니다`;
     els.readerMeta.textContent = "네트워크 연결을 확인해 주세요";
-    els.verseList.innerHTML = `<p class="empty">${error?.message || "SBLGNT 원문 로드 실패"}</p>`;
+    els.verseList.innerHTML = `<p class="empty">${error?.message || `${current.name} 로드 실패`}</p>`;
     throw error;
   }
 }
@@ -1428,6 +1434,10 @@ function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult, 
   const body = document.createElement("div");
   body.className = "verse-text";
   body.dataset.verseId = id;
+  if (translation.language === "he") {
+    body.dir = "rtl";
+    body.lang = "he";
+  }
   appendHighlightedText(body, text, searchQuery, state.textHighlights[textHighlightKey(translation.id, id)] || []);
   attachCopyHandler(body, {
     translationName: translation.name,
@@ -1477,6 +1487,10 @@ function createComparePane(translation, { bookName, chapter, verse, text }) {
   label.textContent = translation.name;
   const verseText = document.createElement("p");
   verseText.textContent = text || "해당 절 없음";
+  if (translation.language === "he") {
+    verseText.dir = "rtl";
+    verseText.lang = "he";
+  }
   if (text) {
     attachCopyHandler(verseText, {
       translationName: translation.name,
@@ -1681,10 +1695,10 @@ els.logoutButton.addEventListener("click", () => {
   });
 });
 els.memberSelect.addEventListener("change", (event) => switchMember(event.target.value));
-els.lastReadButton.addEventListener("click", () => {
+els.lastReadButton.addEventListener("click", async () => {
   const lastRead = activeMember().lastRead;
   if (!lastRead) return;
-  setTranslation(lastRead.translationId);
+  await setTranslation(lastRead.translationId);
   setBook(lastRead.bookId, lastRead.chapter);
 });
 els.chapterReadToggle.addEventListener("click", toggleCurrentChapterRead);
