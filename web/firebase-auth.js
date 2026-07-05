@@ -13,6 +13,12 @@ window.BIBLE_READER_AUTH = {
     return null;
   },
   async saveUserData() {},
+  async loadGratitudeNotes() {
+    return [];
+  },
+  async saveGratitudeNote() {
+    throw new Error("감사 한줄 공유 기능을 사용할 수 없습니다.");
+  },
   onAuthChanged(callback) {
     callback(null);
   },
@@ -33,9 +39,19 @@ window.BIBLE_READER_AUTH_READY = (async () => {
       signInWithPopup,
       signOut,
     } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js");
-    const { doc, getDoc, getFirestore, setDoc } = await import(
-      "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js"
-    );
+    const {
+      addDoc,
+      collection,
+      doc,
+      getDoc,
+      getDocs,
+      getFirestore,
+      limit,
+      orderBy,
+      query,
+      serverTimestamp,
+      setDoc,
+    } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js");
 
     const app = initializeApp(config);
     const auth = getAuth(app);
@@ -68,6 +84,24 @@ window.BIBLE_READER_AUTH_READY = (async () => {
           },
           { merge: true },
         );
+      },
+      async loadGratitudeNotes() {
+        const snapshot = await getDocs(query(collection(db, "gratitudeNotes"), orderBy("createdAt", "desc"), limit(20)));
+        return snapshot.docs.map((item) => ({
+          id: item.id,
+          ...item.data(),
+        }));
+      },
+      async saveGratitudeNote(text) {
+        if (!auth.currentUser) throw new Error("Google 로그인 후 감사 한줄을 나눌 수 있습니다.");
+        const trimmed = text.trim().slice(0, 80);
+        if (!trimmed) return;
+        await addDoc(collection(db, "gratitudeNotes"), {
+          text: trimmed,
+          name: auth.currentUser.displayName || auth.currentUser.email || "익명",
+          uid: auth.currentUser.uid,
+          createdAt: serverTimestamp(),
+        });
       },
       onAuthChanged(callback) {
         onAuthStateChanged(auth, (user) => {

@@ -211,6 +211,8 @@ textarea {
 }
 
 .daily-card,
+.popular-card,
+.gratitude-card,
 .highlight-filter,
 .reading-plan {
   background: var(--panel);
@@ -222,6 +224,8 @@ textarea {
 }
 
 .daily-card span,
+.popular-card span,
+.gratitude-card span,
 .highlight-filter span,
 .reading-plan span {
   color: var(--muted);
@@ -239,6 +243,75 @@ textarea {
   min-height: 44px;
   padding: 10px 12px;
   text-align: left;
+}
+
+.popular-verse-list,
+.gratitude-list {
+  display: grid;
+  gap: 8px;
+}
+
+.popular-verse-list button {
+  background: var(--green-soft);
+  border: 0;
+  border-radius: 8px;
+  color: var(--green);
+  display: grid;
+  gap: 3px;
+  min-height: 44px;
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.popular-verse-list strong {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.popular-verse-list small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.gratitude-form {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 70px;
+}
+
+.gratitude-form button {
+  background: var(--green);
+  border: 0;
+  border-radius: 8px;
+  color: var(--panel);
+  font-weight: 900;
+}
+
+.gratitude-status {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.gratitude-note {
+  background: var(--green-soft);
+  border-radius: 8px;
+  color: var(--green);
+  display: grid;
+  gap: 4px;
+  padding: 9px 10px;
+}
+
+.gratitude-note p {
+  line-height: 1.45;
+  margin: 0;
+}
+
+.gratitude-note small {
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .highlight-filter div {
