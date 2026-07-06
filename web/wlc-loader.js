@@ -1,5 +1,9 @@
 window.BIBLE_HEBREW_LOADER = (() => {
-  const repoBase = "https://raw.githubusercontent.com/openscriptures/morphhb/master/wlc";
+  const remoteBase = "https://raw.githubusercontent.com/openscriptures/morphhb/master/wlc";
+  const localBase =
+    typeof document !== "undefined"
+      ? new URL("./wlc/", document.currentScript?.src || window.location.href).toString()
+      : "";
   const source = {
     title: "Open Scriptures Hebrew Bible / Westminster Leningrad Codex",
     url: "https://github.com/openscriptures/morphhb",
@@ -145,6 +149,25 @@ window.BIBLE_HEBREW_LOADER = (() => {
     };
   }
 
+  async function fetchSourceFile(fileName) {
+    const urls = [
+      localBase ? `${localBase}${fileName}` : "",
+      `${remoteBase}/${fileName}`,
+    ].filter(Boolean);
+
+    let lastError = null;
+    for (const url of urls) {
+      try {
+        const response = await fetch(url);
+        if (response.ok) return response.text();
+        lastError = new Error(`${fileName} ${response.status}`);
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError || new Error(`${fileName} 로드 실패`);
+  }
+
   function decodeXml(value) {
     return value
       .replace(/&quot;/g, '"')
@@ -251,13 +274,7 @@ window.BIBLE_HEBREW_LOADER = (() => {
 
   async function loadVerseMap() {
     if (verseMapPromise) return verseMapPromise;
-    verseMapPromise = fetch(`${repoBase}/VerseMap.xml`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`히브리어 절 번호표를 불러오지 못했습니다. (${response.status})`);
-        }
-        return response.text();
-      })
+    verseMapPromise = fetchSourceFile("VerseMap.xml")
       .then((xml) => {
         const map = new Map();
         const verseRe = /<verse\b[^>]*\bwlc="([^"]+)"[^>]*\bkjv="([^"]+)"/g;
@@ -321,11 +338,8 @@ window.BIBLE_HEBREW_LOADER = (() => {
         .then((verseMap) =>
           Promise.all(
             books.map(async (book) => {
-              const response = await fetch(`${repoBase}/${book[0]}.xml`);
-              if (!response.ok) {
-                throw new Error(`히브리어 원문을 불러오지 못했습니다. (${book[0]} ${response.status})`);
-              }
-              return parseBook(await response.text(), book, verseMap);
+              const xml = await fetchSourceFile(`${book[0]}.xml`);
+              return parseBook(xml, book, verseMap);
             }),
           ),
         )
