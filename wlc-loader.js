@@ -54,6 +54,76 @@ window.BIBLE_HEBREW_LOADER = (() => {
   let loadingPromise = null;
   let verseMapPromise = null;
 
+  const strongGlosses = {
+    1254: "창조하다, 만들다",
+    430: "하나님, 신",
+    853: "목적격 표지",
+    216: "빛",
+    376: "사람, 남자",
+    559: "말하다",
+    776: "땅, 세상",
+    835: "복됨",
+    1961: "되다, 있다",
+    1980: "가다, 걷다",
+    2896: "좋은, 선한",
+    3068: "여호와",
+    3117: "날, 낮",
+    3915: "밤",
+    4325: "물",
+    4428: "왕",
+    6440: "얼굴, 앞",
+    7225: "처음, 시작",
+    7307: "영, 바람, 숨",
+    8064: "하늘",
+    8085: "듣다",
+    8451: "율법, 가르침",
+  };
+
+  const letterMap = {
+    א: "",
+    ב: "b",
+    ג: "g",
+    ד: "d",
+    ה: "h",
+    ו: "w",
+    ז: "z",
+    ח: "ch",
+    ט: "t",
+    י: "y",
+    כ: "k",
+    ך: "k",
+    ל: "l",
+    מ: "m",
+    ם: "m",
+    נ: "n",
+    ן: "n",
+    ס: "s",
+    ע: "",
+    פ: "p",
+    ף: "p",
+    צ: "ts",
+    ץ: "ts",
+    ק: "q",
+    ר: "r",
+    ש: "sh",
+    ת: "t",
+  };
+
+  const vowelMap = {
+    "\u05B0": "e",
+    "\u05B1": "e",
+    "\u05B2": "a",
+    "\u05B3": "o",
+    "\u05B4": "i",
+    "\u05B5": "e",
+    "\u05B6": "e",
+    "\u05B7": "a",
+    "\u05B8": "a",
+    "\u05B9": "o",
+    "\u05BB": "u",
+    "\u05C7": "a",
+  };
+
   function placeholder() {
     return {
       id: "wlc",
@@ -85,14 +155,88 @@ window.BIBLE_HEBREW_LOADER = (() => {
   }
 
   function cleanVerseText(innerXml) {
-    return decodeXml(
-      innerXml
-        .replace(/<note\b[\s\S]*?<\/note>/g, "")
-        .replace(/<[^>]+>/g, "")
-        .replace(/\//g, "")
-        .replace(/\s+/g, " ")
-        .trim(),
-    );
+    return tokensToText(parseVerseTokens(innerXml));
+  }
+
+  function parseAttributes(value) {
+    const attributes = {};
+    const attrRe = /([:\w-]+)="([^"]*)"/g;
+    let match;
+    while ((match = attrRe.exec(value))) {
+      attributes[match[1]] = decodeXml(match[2]);
+    }
+    return attributes;
+  }
+
+  function displayWord(value) {
+    return decodeXml(value.replace(/<[^>]+>/g, "")).replace(/\//g, "");
+  }
+
+  function baseStrong(lemma = "") {
+    const match = lemma.match(/\d+/);
+    return match ? match[0] : "";
+  }
+
+  function transliterateHebrew(value) {
+    const cleaned = displayWord(value).replace(/[־׃׀]/g, "");
+    const normalized = cleaned.normalize("NFD");
+    let output = "";
+    for (let index = 0; index < normalized.length; index += 1) {
+      const char = normalized[index];
+      if (letterMap[char] !== undefined) {
+        output += letterMap[char];
+        continue;
+      }
+      if (vowelMap[char]) {
+        output += vowelMap[char];
+      }
+    }
+    return output || "음역 준비 중";
+  }
+
+  function tokensToText(tokens) {
+    let text = "";
+    tokens.forEach((token) => {
+      if (token.type === "word") {
+        if (text && !text.endsWith("־") && !text.endsWith("׀ ")) text += " ";
+        text += token.text;
+      } else if (token.text === "׀") {
+        text += ` ${token.text} `;
+      } else {
+        text += token.text;
+      }
+    });
+    return text.replace(/\s+/g, " ").trim();
+  }
+
+  function parseVerseTokens(innerXml) {
+    const xml = innerXml.replace(/<note\b[\s\S]*?<\/note>/g, "");
+    const tokens = [];
+    const partRe = /<(w|seg)\b([^>]*)>([\s\S]*?)<\/\1>/g;
+    let match;
+    while ((match = partRe.exec(xml))) {
+      const [, tag, attrs, content] = match;
+      if (tag === "seg") {
+        const text = decodeXml(content.replace(/<[^>]+>/g, "")).trim();
+        if (text) tokens.push({ type: "seg", text });
+        continue;
+      }
+
+      const attributes = parseAttributes(attrs);
+      const strong = baseStrong(attributes.lemma || "");
+      const text = displayWord(content);
+      if (!text) continue;
+      tokens.push({
+        type: "word",
+        text,
+        transliteration: transliterateHebrew(content),
+        lemma: attributes.lemma || "",
+        strong,
+        morph: attributes.morph || "",
+        meaning: strongGlosses[strong] || "뜻 사전 준비 중",
+      });
+    }
+    return tokens;
   }
 
   function parseReference(reference) {
@@ -143,7 +287,8 @@ window.BIBLE_HEBREW_LOADER = (() => {
       const reference = parseReference(match[1]);
       if (!reference) continue;
       const mapped = verseMap.get(match[1]) || reference;
-      const text = cleanVerseText(match[2]);
+      const tokens = parseVerseTokens(match[2]);
+      const text = tokensToText(tokens);
       if (!text) continue;
       if (!chapterMap.has(mapped.chapter)) {
         chapterMap.set(mapped.chapter, new Map());
@@ -151,6 +296,7 @@ window.BIBLE_HEBREW_LOADER = (() => {
       chapterMap.get(mapped.chapter).set(mapped.verse, {
         verse: mapped.verse,
         text,
+        tokens,
       });
     }
 

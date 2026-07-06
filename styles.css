@@ -706,6 +706,71 @@ textarea {
   unicode-bidi: plaintext;
 }
 
+.hebrew-token {
+  background: transparent;
+  border: 0;
+  border-radius: 5px;
+  color: inherit;
+  cursor: pointer;
+  display: inline;
+  font: inherit;
+  min-height: 0;
+  padding: 0 1px;
+}
+
+.hebrew-token:hover,
+.hebrew-token:focus-visible {
+  background: var(--green-soft);
+  color: var(--green);
+  outline: 0;
+}
+
+.hebrew-word-panel {
+  background: var(--green-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+}
+
+.hebrew-word-panel.compact {
+  font-size: 13px;
+  padding: 8px 10px;
+}
+
+.hebrew-word-panel strong {
+  color: var(--green);
+  font-family:
+    "SBL Hebrew",
+    "Ezra SIL",
+    "Times New Roman",
+    serif;
+  font-size: 24px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.hebrew-word-panel p {
+  color: var(--muted);
+  display: grid;
+  gap: 6px;
+  grid-template-columns: 62px minmax(0, 1fr);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.hebrew-word-panel span {
+  color: var(--gold);
+  font-weight: 900;
+}
+
+.hebrew-word-panel b {
+  color: var(--ink);
+  font-weight: 700;
+}
+
 .verse-content {
   display: grid;
   gap: 10px;
