@@ -771,6 +771,39 @@ textarea {
   font-weight: 700;
 }
 
+.hebrew-transliteration {
+  background: rgba(146, 120, 77, 0.1);
+  border-left: 3px solid var(--gold);
+  border-radius: 6px;
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+}
+
+.hebrew-transliteration.compact {
+  font-size: 13px;
+  padding: 7px 9px;
+}
+
+.hebrew-transliteration span {
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.hebrew-transliteration p {
+  color: var(--ink);
+  font-family:
+    "Segoe UI",
+    system-ui,
+    sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.45;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .verse-content {
   display: grid;
   gap: 10px;
