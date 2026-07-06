@@ -149,19 +149,6 @@ const recommendedDailyVerseRefs = [
   ["revelation", 21, 4],
 ];
 
-const popularVerseRefs = [
-  ["john", 3, 16],
-  ["matthew", 11, 28],
-  ["romans", 8, 28],
-  ["philippians", 4, 6],
-  ["philippians", 4, 13],
-  ["ephesians", 2, 8],
-  ["2-corinthians", 5, 17],
-  ["1-corinthians", 13, 13],
-  ["1-peter", 5, 7],
-  ["revelation", 21, 4],
-];
-
 const els = {
   searchInput: document.querySelector("#searchInput"),
   googleLoginButton: document.querySelector("#googleLoginButton"),
@@ -173,7 +160,6 @@ const els = {
   lastReadButton: document.querySelector("#lastReadButton"),
   chapterReadToggle: document.querySelector("#chapterReadToggle"),
   dailyVerseButton: document.querySelector("#dailyVerseButton"),
-  popularVerseList: document.querySelector("#popularVerseList"),
   gratitudeForm: document.querySelector("#gratitudeForm"),
   gratitudeInput: document.querySelector("#gratitudeInput"),
   gratitudeStatus: document.querySelector("#gratitudeStatus"),
@@ -863,25 +849,6 @@ function renderDailyVerse() {
   els.dailyVerseButton.onclick = () => {
     setBook(verse.bookId, verse.chapter);
   };
-}
-
-function renderPopularVerses() {
-  const translation = selectedTranslation();
-  els.popularVerseList.innerHTML = "";
-  popularVerseRefs
-    .map((ref) => verseFromRef(translation, ref))
-    .filter(Boolean)
-    .forEach((verse) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      const ref = document.createElement("strong");
-      ref.textContent = `${verse.bookName} ${verse.chapter}:${verse.verse}`;
-      const text = document.createElement("small");
-      text.textContent = verse.text.length > 42 ? `${verse.text.slice(0, 42)}...` : verse.text;
-      button.append(ref, text);
-      button.addEventListener("click", () => setBook(verse.bookId, verse.chapter));
-      els.popularVerseList.append(button);
-    });
 }
 
 function renderGratitudePanel() {
@@ -1760,7 +1727,6 @@ function render() {
   renderBookButtons();
   renderSourceAttribution();
   renderDailyVerse();
-  renderPopularVerses();
   renderGratitudePanel();
   renderDevotionalPanel();
   renderHeader();

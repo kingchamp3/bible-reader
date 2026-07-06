@@ -211,7 +211,6 @@ textarea {
 }
 
 .daily-card,
-.popular-card,
 .gratitude-card,
 .devotional-card,
 .source-attribution,
@@ -226,7 +225,6 @@ textarea {
 }
 
 .daily-card span,
-.popular-card span,
 .gratitude-card span,
 .devotional-card > span,
 .source-attribution span,
@@ -264,33 +262,9 @@ textarea {
   text-align: left;
 }
 
-.popular-verse-list,
 .gratitude-list {
   display: grid;
   gap: 8px;
-}
-
-.popular-verse-list button {
-  background: var(--green-soft);
-  border: 0;
-  border-radius: 8px;
-  color: var(--green);
-  display: grid;
-  gap: 3px;
-  min-height: 44px;
-  padding: 9px 10px;
-  text-align: left;
-}
-
-.popular-verse-list strong {
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.popular-verse-list small {
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.35;
 }
 
 .gratitude-form {
