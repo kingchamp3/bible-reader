@@ -1364,6 +1364,27 @@ function appendHebrewTokens(element, verseData, detailsPanel) {
   });
 }
 
+function hebrewTransliteration(tokens = []) {
+  return tokens
+    .filter((token) => token.type === "word" && token.transliteration)
+    .map((token) => token.transliteration)
+    .join(" ");
+}
+
+function createHebrewTransliteration(tokens = [], compact = false) {
+  const transliteration = hebrewTransliteration(tokens);
+  if (!transliteration) return null;
+
+  const wrapper = document.createElement("div");
+  wrapper.className = `hebrew-transliteration${compact ? " compact" : ""}`;
+  const label = document.createElement("span");
+  label.textContent = "음역";
+  const text = document.createElement("p");
+  text.textContent = transliteration;
+  wrapper.append(label, text);
+  return wrapper;
+}
+
 function applyHighlight(row, id) {
   const highlight = state.highlights[id];
   if (highlight) {
@@ -1524,6 +1545,8 @@ function createVerseRow({ bookId, chapter, verse, text, tokens, refLabel, search
   content.className = "verse-content";
   content.append(body);
   if (translation.language === "he" && tokens?.length) {
+    const transliteration = createHebrewTransliteration(tokens);
+    if (transliteration) content.append(transliteration);
     content.append(hebrewDetails);
   }
   if (noteEditor) {
@@ -1585,6 +1608,8 @@ function createComparePane(translation, { bookName, chapter, verse, verseData })
   }
   pane.append(label, verseText);
   if (translation.language === "he" && verseData?.tokens?.length) {
+    const transliteration = createHebrewTransliteration(verseData.tokens, true);
+    if (transliteration) pane.append(transliteration);
     pane.append(hebrewDetails);
   }
   return pane;
