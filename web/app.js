@@ -1299,6 +1299,71 @@ function appendHighlightedText(element, text, query, textHighlights = []) {
   }
 }
 
+function morphSummary(morph = "") {
+  const parts = [];
+  if (morph.includes("/N")) parts.push("명사");
+  if (morph.includes("/V") || morph.includes("HV")) parts.push("동사");
+  if (morph.includes("/A") || morph.includes("HA")) parts.push("형용사");
+  if (morph.includes("/R") || morph.includes("HR")) parts.push("전치사");
+  if (morph.includes("/C") || morph.includes("HC")) parts.push("접속");
+  if (morph.includes("/T") || morph.includes("HT")) parts.push("관사/표지");
+  return parts.length ? `${parts.join(", ")} · ${morph}` : morph || "문법 정보 없음";
+}
+
+function showHebrewWordPanel(panel, token) {
+  panel.hidden = false;
+  panel.replaceChildren();
+
+  const word = document.createElement("strong");
+  word.textContent = token.text;
+  word.dir = "rtl";
+  word.lang = "he";
+
+  const rows = [
+    ["음역", token.transliteration || "음역 준비 중"],
+    ["뜻", token.meaning || "뜻 사전 준비 중"],
+    ["원형", token.lemma || (token.strong ? `Strong ${token.strong}` : "원형 정보 없음")],
+    ["문법", morphSummary(token.morph)],
+  ];
+
+  panel.append(word);
+  rows.forEach(([label, value]) => {
+    const row = document.createElement("p");
+    const labelElement = document.createElement("span");
+    labelElement.textContent = label;
+    const valueElement = document.createElement("b");
+    valueElement.textContent = value;
+    row.append(labelElement, valueElement);
+    panel.append(row);
+  });
+}
+
+function appendHebrewTokens(element, verseData, detailsPanel) {
+  let previousWasWord = false;
+  (verseData.tokens || []).forEach((token) => {
+    if (token.type === "word") {
+      if (previousWasWord) element.append(document.createTextNode(" "));
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "hebrew-token";
+      button.textContent = token.text;
+      button.dir = "rtl";
+      button.lang = "he";
+      button.title = `${token.transliteration || "음역"} · ${token.meaning || "뜻"}`;
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        showHebrewWordPanel(detailsPanel, token);
+      });
+      element.append(button);
+      previousWasWord = true;
+      return;
+    }
+
+    element.append(document.createTextNode(token.text));
+    previousWasWord = token.text !== "־";
+  });
+}
+
 function applyHighlight(row, id) {
   const highlight = state.highlights[id];
   if (highlight) {
@@ -1413,7 +1478,7 @@ function createNoteEditor(id) {
   return editor;
 }
 
-function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult, searchQuery }) {
+function createVerseRow({ bookId, chapter, verse, text, tokens, refLabel, searchResult, searchQuery }) {
   const id = bookmarkId(bookId, chapter, verse);
   const marked = state.bookmarks.has(id);
   const translation = selectedTranslation();
@@ -1438,7 +1503,14 @@ function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult, 
     body.dir = "rtl";
     body.lang = "he";
   }
-  appendHighlightedText(body, text, searchQuery, state.textHighlights[textHighlightKey(translation.id, id)] || []);
+  const hebrewDetails = document.createElement("div");
+  hebrewDetails.className = "hebrew-word-panel";
+  hebrewDetails.hidden = true;
+  if (translation.language === "he" && tokens?.length) {
+    appendHebrewTokens(body, { text, tokens }, hebrewDetails);
+  } else {
+    appendHighlightedText(body, text, searchQuery, state.textHighlights[textHighlightKey(translation.id, id)] || []);
+  }
   attachCopyHandler(body, {
     translationName: translation.name,
     bookName: book.name,
@@ -1451,6 +1523,9 @@ function createVerseRow({ bookId, chapter, verse, text, refLabel, searchResult, 
   const content = document.createElement("div");
   content.className = "verse-content";
   content.append(body);
+  if (translation.language === "he" && tokens?.length) {
+    content.append(hebrewDetails);
+  }
   if (noteEditor) {
     content.append(noteEditor);
   } else if (note) {
@@ -1480,16 +1555,24 @@ function verseFromRef(translation, [bookId, chapterNumber, verseNumber]) {
   };
 }
 
-function createComparePane(translation, { bookName, chapter, verse, text }) {
+function createComparePane(translation, { bookName, chapter, verse, verseData }) {
   const pane = document.createElement("div");
   pane.className = "compare-pane";
   const label = document.createElement("strong");
   label.textContent = translation.name;
   const verseText = document.createElement("p");
-  verseText.textContent = text || "해당 절 없음";
+  const text = verseData?.text || "";
+  const hebrewDetails = document.createElement("div");
+  hebrewDetails.className = "hebrew-word-panel compact";
+  hebrewDetails.hidden = true;
   if (translation.language === "he") {
     verseText.dir = "rtl";
     verseText.lang = "he";
+  }
+  if (translation.language === "he" && verseData?.tokens?.length) {
+    appendHebrewTokens(verseText, verseData, hebrewDetails);
+  } else {
+    verseText.textContent = text || "해당 절 없음";
   }
   if (text) {
     attachCopyHandler(verseText, {
@@ -1501,10 +1584,14 @@ function createComparePane(translation, { bookName, chapter, verse, text }) {
     });
   }
   pane.append(label, verseText);
+  if (translation.language === "he" && verseData?.tokens?.length) {
+    pane.append(hebrewDetails);
+  }
   return pane;
 }
 
-function createCompareVerseRow({ bookId, chapter, verse, text }) {
+function createCompareVerseRow(verseData) {
+  const { bookId, chapter, verse, text } = verseData;
   const id = bookmarkId(bookId, chapter, verse);
   const marked = state.bookmarks.has(id);
   const parallelTranslations = selectedParallelTranslations();
@@ -1523,8 +1610,8 @@ function createCompareVerseRow({ bookId, chapter, verse, text }) {
   body.className = "compare-grid";
 
   parallelTranslations.forEach((translation, index) => {
-    const verseText = index === 0 ? text : findTranslationVerse(translation, bookId, chapter, verse)?.text;
-    body.append(createComparePane(translation, { bookName, chapter, verse, text: verseText }));
+    const paneVerse = index === 0 ? verseData : findTranslationVerse(translation, bookId, chapter, verse);
+    body.append(createComparePane(translation, { bookName, chapter, verse, verseData: paneVerse }));
   });
   const noteEditor = createNoteEditor(id);
   const note = createNoteElement(id);
