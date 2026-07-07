@@ -85,7 +85,7 @@ python scripts/convert-bibles.py
    - 허가받은 원문 파일을 확보한 뒤 전체 성경 데이터로 교체해야 합니다.
 
 2. 앱 정보
-   - 앱 이름: 말씀길
+   - 앱 이름: 성경을 읽다
    - Android 패키지 ID: `com.malsseumgil.bible`
    - 패키지 ID는 출시 후 바꾸기 어렵기 때문에 브랜드가 확정되면 최종 결정하세요.
 
