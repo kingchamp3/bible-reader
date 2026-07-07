@@ -18,6 +18,6 @@ const standalone = html
   .replace('    <script src="./bibles-data.js"></script>', `    <script>\n${data}\n    </script>`)
   .replace('    <script type="module" src="./app.js"></script>', `    <script type="module">\n${app}\n    </script>`);
 
-const output = path.join(root, "malsseumgil-web-bible.html");
+const output = path.join(root, "bible-reader-web.html");
 fs.writeFileSync(output, standalone, "utf8");
 console.log(output);

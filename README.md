@@ -15,7 +15,7 @@ Expo Go 앱으로 QR 코드를 스캔하면 휴대폰에서 바로 확인할 수
 가장 쉬운 방법은 아래 파일을 더블클릭하는 것입니다.
 
 ```text
-malsseumgil-web-bible.html
+bible-reader-web.html
 ```
 
 이 파일 하나 안에 웹 화면과 개역한글 데이터가 모두 들어 있습니다.
@@ -86,7 +86,7 @@ python scripts/convert-bibles.py
 
 2. 앱 정보
    - 앱 이름: 성경을 읽다
-   - Android 패키지 ID: `com.malsseumgil.bible`
+   - Android 패키지 ID: `com.biblereader.app`
    - 패키지 ID는 출시 후 바꾸기 어렵기 때문에 브랜드가 확정되면 최종 결정하세요.
 
 3. 개인정보 처리방침

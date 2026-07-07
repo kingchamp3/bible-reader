@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>성경을 읽다 - 성경 번역본</title>
+    <link rel="stylesheet" href="./styles.css?v=nt-daily-a4682bf" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar" aria-label="성경 선택">
+        <section class="brand">
+          <p class="translation">개역한글</p>
+          <h1>성경을 읽다</h1>
+          <p>전체 성경을 읽고 검색하는 조용한 웹 성경</p>
+        </section>
+
+        <section class="member-panel" aria-label="회원 관리">
+          <div id="authPanel" class="auth-panel">
+            <button id="googleLoginButton" type="button">Google 로그인</button>
+            <button id="logoutButton" type="button" hidden>로그아웃</button>
+            <span id="authStatus">브라우저 저장 중</span>
+          </div>
+          <label>
+            <span>회원</span>
+            <select id="memberSelect"></select>
+          </label>
+          <div class="progress-card">
+            <div>
+              <strong id="progressPercent">0%</strong>
+              <span id="progressSummary">읽은 장 0 / 0</span>
+            </div>
+            <button id="lastReadButton" type="button">최근 위치</button>
+            <button id="chapterReadToggle" type="button">현재 장 체크</button>
+          </div>
+        </section>
+
+        <section class="daily-card" id="dailyVerseCard">
+          <span>오늘의 말씀</span>
+          <button id="dailyVerseButton" type="button">불러오는 중</button>
+        </section>
+
+        <label class="search-box">
+          <span>전체 검색</span>
+          <input id="searchInput" type="search" placeholder="예: 사랑, 믿음, 창조" autocomplete="off" />
+        </label>
+
+        <label class="search-box">
+          <span>번역본</span>
+          <select id="translationSelect"></select>
+        </label>
+
+        <label class="search-box">
+          <span>대조 번역 1</span>
+          <select id="compareTranslationSelect"></select>
+        </label>
+
+        <label class="search-box">
+          <span>대조 번역 2</span>
+          <select id="compareTranslationSelect2"></select>
+        </label>
+
+        <section class="toolbar" aria-label="읽기 설정">
+          <button id="decreaseFont" type="button">A-</button>
+          <output id="fontSizeLabel">20</output>
+          <button id="increaseFont" type="button">A+</button>
+          <button id="themeToggle" type="button">어둡게</button>
+        </section>
+
+        <section class="favorite-actions split-actions">
+          <button id="favoritesToggle" type="button">즐겨찾기 보기</button>
+          <button id="compareToggle" type="button">대조 보기</button>
+        </section>
+
+        <section class="highlight-filter" aria-label="형광펜 모아보기">
+          <span>형광펜 모아보기</span>
+          <div>
+            <button type="button" data-highlight-filter="yellow">노랑</button>
+            <button type="button" data-highlight-filter="green">초록</button>
+            <button type="button" data-highlight-filter="pink">분홍</button>
+            <button type="button" data-highlight-filter="blue">파랑</button>
+          </div>
+        </section>
+
+        <section class="selectors">
+          <label>
+            <span>성경</span>
+            <select id="bookSelect"></select>
+          </label>
+          <label>
+            <span>장</span>
+            <select id="chapterSelect"></select>
+          </label>
+        </section>
+
+        <section class="book-list" aria-label="성경 목록">
+          <div class="testament-tabs">
+            <button id="oldTab" class="active" type="button">구약</button>
+            <button id="newTab" type="button">신약</button>
+          </div>
+          <div id="bookList" class="book-buttons"></div>
+        </section>
+
+        <section class="reading-plan" aria-label="성경 읽기표">
+          <span>성경 읽기표</span>
+          <div id="readingPlan" class="reading-plan-grid"></div>
+        </section>
+      </aside>
+
+      <section class="reader-panel">
+        <header class="reader-header">
+          <div>
+            <p id="readerMeta" class="reader-meta">개역한글</p>
+            <h2 id="readerTitle">창세기 1장</h2>
+          </div>
+          <div class="bookmark-count">
+            <strong id="bookmarkCount">0</strong>
+            <span>저장</span>
+          </div>
+        </header>
+
+        <section id="resultSummary" class="result-summary" hidden></section>
+        <article id="verseList" class="verse-list" aria-live="polite"></article>
+      </section>
+    </main>
+
+    <script>
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyDOyMjBDYhflclTePn7Dfxxcw65xlrqbhQ",
+  authDomain: "bible-9ec46.firebaseapp.com",
+  projectId: "bible-9ec46",
+  storageBucket: "bible-9ec46.firebasestorage.app",
+  messagingSenderId: "302546089169",
+  appId: "1:302546089169:web:190ada5b7beb73f78f81f0",
+  measurementId: "G-5277Q2TX28",
+};
+
+    </script>
+    <script type="module">
+const config = window.FIREBASE_CONFIG || {};
+const hasFirebaseConfig = Boolean(config.apiKey && config.authDomain && config.projectId && config.appId);
+
+window.BIBLE_READER_AUTH = {
+  enabled: false,
+  user: null,
+  async login() {
+    const reason = window.BIBLE_READER_AUTH_ERROR ? `\n\n사유: ${window.BIBLE_READER_AUTH_ERROR}` : "";
+    alert(`Google 로그인을 준비하지 못했습니다.${reason}`);
+  },
+  async logout() {},
+  async loadUserData() {
+    return null;
+  },
+  async saveUserData() {},
+  onAuthChanged(callback) {
+    callback(null);
+  },
+};
+
+window.BIBLE_READER_AUTH_READY = (async () => {
+  if (!hasFirebaseConfig) {
+    window.BIBLE_READER_AUTH_ERROR = "Firebase 설정값이 없습니다.";
+    return window.BIBLE_READER_AUTH;
+  }
+
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js");
+    const {
+      GoogleAuthProvider,
+      getAuth,
+      onAuthStateChanged,
+      signInWithPopup,
+      signOut,
+    } = await import("https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js");
+    const { doc, getDoc, getFirestore, setDoc } = await import(
+      "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js"
+    );
+
+    const app = initializeApp(config);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    window.BIBLE_READER_AUTH = {
+      enabled: true,
+      user: null,
+      async login() {
+        await signInWithPopup(auth, provider);
+      },
+      async logout() {
+        await signOut(auth);
+      },
+      async loadUserData() {
+        if (!auth.currentUser) return null;
+        const snapshot = await getDoc(doc(db, "bibleReaderUsers", auth.currentUser.uid));
+        return snapshot.exists() ? snapshot.data() : null;
+      },
+      async saveUserData(data) {
+        if (!auth.currentUser) return;
+        await setDoc(
+          doc(db, "bibleReaderUsers", auth.currentUser.uid),
+          {
+            ...data,
+            email: auth.currentUser.email,
+            name: auth.currentUser.displayName,
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true },
+        );
+      },
+      onAuthChanged(callback) {
+        onAuthStateChanged(auth, (user) => {
+          this.user = user
+            ? {
+                uid: user.uid,
+                name: user.displayName || user.email || "Google 사용자",
+                email: user.email,
+              }
+            : null;
+          callback(this.user);
+        });
+      },
+    };
+
+    return window.BIBLE_READER_AUTH;
+  } catch (error) {
+    window.BIBLE_READER_AUTH_ERROR = error?.message || "Firebase 스크립트를 불러오지 못했습니다.";
+    return window.BIBLE_READER_AUTH;
+  }
+})();
+
+    </script>
+    <script src="./bibles-data.js?v=nt-daily-a4682bf"></script>
+    <script type="module" src="./app.js?v=nt-daily-a4682bf"></script>
+  </body>
+</html>
