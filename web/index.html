@@ -4,9 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>성경을 읽다 - 성경 번역본</title>
-    <link rel="stylesheet" href="./styles.css?v=sidebar-clean-v1" />
+    <link rel="stylesheet" href="./styles.css?v=independent-menu-v1" />
   </head>
   <body>
+    <nav class="main-menu" aria-label="주요 메뉴">
+      <button class="active" type="button" data-app-section="bible">성경 읽기</button>
+      <button type="button" data-app-section="devotional">묵상 노트</button>
+      <button type="button" data-app-section="gratitude">감사 한줄</button>
+    </nav>
+
     <main class="app-shell">
       <aside class="sidebar" aria-label="성경 선택">
         <section class="brand">
@@ -38,46 +44,6 @@
         <section class="daily-card" id="dailyVerseCard">
           <span>오늘의 말씀</span>
           <button id="dailyVerseButton" type="button">불러오는 중</button>
-        </section>
-
-        <section class="gratitude-card" aria-label="감사 한줄">
-          <span>감사 한줄</span>
-          <form id="gratitudeForm" class="gratitude-form">
-            <input id="gratitudeInput" type="text" maxlength="80" placeholder="오늘 감사한 일을 한줄로" />
-            <button type="submit">나누기</button>
-          </form>
-          <p id="gratitudeStatus" class="gratitude-status"></p>
-          <div id="gratitudeList" class="gratitude-list"></div>
-        </section>
-
-        <section class="devotional-card" aria-label="묵상 노트">
-          <span>묵상 노트</span>
-          <form id="devotionalForm" class="devotional-form">
-            <label>
-              <small>날짜</small>
-              <input id="devotionalDate" type="date" />
-            </label>
-            <label>
-              <small>오늘 읽은 본문</small>
-              <input id="devotionalPassage" type="text" placeholder="예: 요한복음 3장" />
-            </label>
-            <button id="useCurrentPassageButton" type="button">현재 본문 넣기</button>
-            <label>
-              <small>깨달은 점</small>
-              <textarea id="devotionalInsight" rows="3" placeholder="말씀을 통해 깨달은 점"></textarea>
-            </label>
-            <label>
-              <small>기도 제목</small>
-              <textarea id="devotionalPrayer" rows="3" placeholder="기도로 올려드릴 제목"></textarea>
-            </label>
-            <label>
-              <small>적용할 점</small>
-              <textarea id="devotionalAction" rows="3" placeholder="오늘 삶에서 실천할 한 가지"></textarea>
-            </label>
-            <button type="submit">묵상 저장</button>
-          </form>
-          <p id="devotionalStatus" class="devotional-status"></p>
-          <div id="devotionalList" class="devotional-list"></div>
         </section>
 
         <label class="search-box">
@@ -150,27 +116,81 @@
       </aside>
 
       <section class="reader-panel">
-        <header class="reader-header">
-          <div>
-            <p id="readerMeta" class="reader-meta">개역한글</p>
-            <h2 id="readerTitle">창세기 1장</h2>
-          </div>
-          <div class="bookmark-count">
-            <strong id="bookmarkCount">0</strong>
-            <span>저장</span>
-          </div>
-        </header>
+        <section class="content-section active" data-content-section="bible">
+          <header class="reader-header">
+            <div>
+              <p id="readerMeta" class="reader-meta">개역한글</p>
+              <h2 id="readerTitle">창세기 1장</h2>
+            </div>
+            <div class="bookmark-count">
+              <strong id="bookmarkCount">0</strong>
+              <span>저장</span>
+            </div>
+          </header>
 
-        <section id="resultSummary" class="result-summary" hidden></section>
-        <article id="verseList" class="verse-list" aria-live="polite"></article>
+          <section id="resultSummary" class="result-summary" hidden></section>
+          <article id="verseList" class="verse-list" aria-live="polite"></article>
+        </section>
+
+        <section class="content-section menu-panel" data-content-section="devotional" aria-label="묵상 노트">
+          <header class="menu-panel-header">
+            <p class="reader-meta">기록</p>
+            <h2>묵상 노트</h2>
+          </header>
+          <section class="devotional-card">
+            <span>묵상 작성</span>
+            <form id="devotionalForm" class="devotional-form">
+              <label>
+                <small>날짜</small>
+                <input id="devotionalDate" type="date" />
+              </label>
+              <label>
+                <small>오늘 읽은 본문</small>
+                <input id="devotionalPassage" type="text" placeholder="예: 요한복음 3장" />
+              </label>
+              <button id="useCurrentPassageButton" type="button">현재 본문 넣기</button>
+              <label>
+                <small>깨달은 점</small>
+                <textarea id="devotionalInsight" rows="3" placeholder="말씀을 통해 깨달은 점"></textarea>
+              </label>
+              <label>
+                <small>기도 제목</small>
+                <textarea id="devotionalPrayer" rows="3" placeholder="기도로 올려드릴 제목"></textarea>
+              </label>
+              <label>
+                <small>적용할 점</small>
+                <textarea id="devotionalAction" rows="3" placeholder="오늘 삶에서 실천할 한 가지"></textarea>
+              </label>
+              <button type="submit">묵상 저장</button>
+            </form>
+            <p id="devotionalStatus" class="devotional-status"></p>
+            <div id="devotionalList" class="devotional-list"></div>
+          </section>
+        </section>
+
+        <section class="content-section menu-panel" data-content-section="gratitude" aria-label="감사 한줄">
+          <header class="menu-panel-header">
+            <p class="reader-meta">나눔</p>
+            <h2>감사 한줄</h2>
+          </header>
+          <section class="gratitude-card">
+            <span>감사 나누기</span>
+            <form id="gratitudeForm" class="gratitude-form">
+              <input id="gratitudeInput" type="text" maxlength="80" placeholder="오늘 감사한 일을 한줄로" />
+              <button type="submit">나누기</button>
+            </form>
+            <p id="gratitudeStatus" class="gratitude-status"></p>
+            <div id="gratitudeList" class="gratitude-list"></div>
+          </section>
+        </section>
       </section>
     </main>
 
     <script src="./firebase-config-9ec46.js"></script>
     <script type="module" src="./firebase-auth.js?v=security-audit-v1"></script>
-    <script src="./bibles-data.js?v=sidebar-clean-v1"></script>
-    <script src="./sblgnt-loader.js?v=sidebar-clean-v1"></script>
-    <script src="./wlc-loader.js?v=sidebar-clean-v1"></script>
-    <script type="module" src="./app.js?v=sidebar-clean-v1"></script>
+    <script src="./bibles-data.js?v=independent-menu-v1"></script>
+    <script src="./sblgnt-loader.js?v=independent-menu-v1"></script>
+    <script src="./wlc-loader.js?v=independent-menu-v1"></script>
+    <script type="module" src="./app.js?v=independent-menu-v1"></script>
   </body>
 </html>
