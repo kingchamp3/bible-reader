@@ -150,6 +150,8 @@ const recommendedDailyVerseRefs = [
 ];
 
 const els = {
+  appMenuButtons: document.querySelectorAll("[data-app-section]"),
+  contentSections: document.querySelectorAll("[data-content-section]"),
   searchInput: document.querySelector("#searchInput"),
   googleLoginButton: document.querySelector("#googleLoginButton"),
   logoutButton: document.querySelector("#logoutButton"),
@@ -196,6 +198,17 @@ const els = {
   highlightFilter: document.querySelector(".highlight-filter"),
   readingPlan: document.querySelector("#readingPlan"),
 };
+
+function showAppSection(sectionId) {
+  const nextSection = sectionId || "bible";
+  document.body.dataset.activeSection = nextSection;
+  els.appMenuButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.appSection === nextSection);
+  });
+  els.contentSections.forEach((section) => {
+    section.classList.toggle("active", section.dataset.contentSection === nextSection);
+  });
+}
 
 function selectedTranslation() {
   return (
@@ -1852,6 +1865,9 @@ els.highlightFilter.addEventListener("click", (event) => {
   renderHeader();
   renderVerses();
 });
+els.appMenuButtons.forEach((button) => {
+  button.addEventListener("click", () => showAppSection(button.dataset.appSection));
+});
 els.gratitudeForm.addEventListener("submit", submitGratitudeNote);
 els.devotionalForm.addEventListener("submit", saveDevotionalNote);
 els.useCurrentPassageButton.addEventListener("click", () => {
@@ -1861,6 +1877,7 @@ els.useCurrentPassageButton.addEventListener("click", () => {
 
 document.addEventListener("selectionchange", captureTextSelection);
 
+showAppSection("bible");
 loadActiveMember();
 persistMembers();
 render();
