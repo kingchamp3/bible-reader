@@ -4,12 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>성경을 읽다 - 성경 번역본</title>
-    <link rel="stylesheet" href="./styles.css?v=home-selector-v1" />
+    <link rel="stylesheet" href="./styles.css?v=home-auth-v1" />
   </head>
   <body data-bible-view="home">
     <section class="bible-home" aria-label="성경 선택">
       <div class="bible-home-content">
         <h1>성경을 읽다</h1>
+        <div class="home-auth" aria-label="로그인 및 회원가입">
+          <div class="home-auth-actions">
+            <button id="homeGoogleLoginButton" type="button">Google 로그인</button>
+            <button id="homeGoogleSignupButton" type="button">회원가입</button>
+          </div>
+          <p id="homeAuthStatus" aria-live="polite">로그인 없이 성경을 읽을 수 있습니다.</p>
+        </div>
         <div class="bible-home-actions">
           <button id="homeOldTestament" type="button">구약성서</button>
           <button id="homeNewTestament" type="button">신약성서</button>
@@ -199,9 +206,9 @@
 
     <script src="./firebase-config-9ec46.js"></script>
     <script type="module" src="./firebase-auth.js?v=security-audit-v1"></script>
-    <script src="./bibles-data.js?v=home-selector-v1"></script>
-    <script src="./sblgnt-loader.js?v=home-selector-v1"></script>
-    <script src="./wlc-loader.js?v=home-selector-v1"></script>
-    <script type="module" src="./app.js?v=home-selector-v1"></script>
+    <script src="./bibles-data.js?v=home-auth-v1"></script>
+    <script src="./sblgnt-loader.js?v=home-auth-v1"></script>
+    <script src="./wlc-loader.js?v=home-auth-v1"></script>
+    <script type="module" src="./app.js?v=home-auth-v1"></script>
   </body>
 </html>

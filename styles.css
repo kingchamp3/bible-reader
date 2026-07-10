@@ -85,6 +85,41 @@ select {
   text-align: center;
 }
 
+.home-auth {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.home-auth-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.home-auth-actions button {
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  min-height: 44px;
+}
+
+.home-auth-actions button:hover,
+.home-auth-actions button:focus-visible {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.home-auth p {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+  text-align: center;
+}
+
 .bible-home-actions {
   display: grid;
   gap: 10px;
