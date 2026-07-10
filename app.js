@@ -152,6 +152,8 @@ const recommendedDailyVerseRefs = [
 const els = {
   appMenuButtons: document.querySelectorAll("[data-app-section]"),
   contentSections: document.querySelectorAll("[data-content-section]"),
+  bibleNavigator: document.querySelector(".bible-navigator"),
+  bibleReader: document.querySelector('[data-content-section="bible"]'),
   searchInput: document.querySelector("#searchInput"),
   googleLoginButton: document.querySelector("#googleLoginButton"),
   logoutButton: document.querySelector("#logoutButton"),
@@ -1805,6 +1807,9 @@ els.chapterList.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-chapter]");
   if (button) {
     setChapter(button.dataset.chapter);
+    requestAnimationFrame(() => {
+      els.bibleReader.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 });
 els.readingPlan.addEventListener("click", (event) => {
@@ -1860,7 +1865,15 @@ els.highlightFilter.addEventListener("click", (event) => {
   renderVerses();
 });
 els.appMenuButtons.forEach((button) => {
-  button.addEventListener("click", () => showAppSection(button.dataset.appSection));
+  button.addEventListener("click", () => {
+    const sectionId = button.dataset.appSection;
+    showAppSection(sectionId);
+    if (sectionId === "bible") {
+      requestAnimationFrame(() => {
+        els.bibleNavigator.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  });
 });
 els.gratitudeForm.addEventListener("submit", submitGratitudeNote);
 els.devotionalForm.addEventListener("submit", saveDevotionalNote);
