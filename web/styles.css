@@ -479,6 +479,7 @@ textarea {
 .toolbar button,
 .testament-tabs button,
 .book-buttons button,
+.chapter-buttons button,
 .verse-ref,
 .verse-save,
 .highlight-swatch,
@@ -520,10 +521,36 @@ textarea {
   text-align: center;
 }
 
-.selectors {
+.bible-navigator {
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+
+.navigator-heading {
   display: grid;
-  gap: 10px;
-  grid-template-columns: 1fr 96px;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.navigator-heading > span,
+.navigator-step > span {
+  color: var(--green);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.bible-path {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.navigator-step {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
 }
 
 .testament-tabs {
@@ -540,7 +567,8 @@ textarea {
 }
 
 .testament-tabs button.active,
-.book-buttons button.active {
+.book-buttons button.active,
+.chapter-buttons button.active {
   background: var(--green);
   color: var(--panel);
 }
@@ -556,12 +584,25 @@ textarea {
   grid-template-columns: 1fr 1fr;
 }
 
+.chapter-buttons {
+  display: grid;
+  gap: 7px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .book-buttons button {
   background: var(--panel-soft);
   color: var(--ink);
   min-height: 42px;
   overflow-wrap: anywhere;
   padding: 8px;
+}
+
+.chapter-buttons button {
+  background: var(--panel-soft);
+  color: var(--ink);
+  min-height: 38px;
+  padding: 6px 3px;
 }
 
 .reader-panel {
