@@ -155,6 +155,9 @@ const els = {
   homeButton: document.querySelector("#homeButton"),
   homeOldTestament: document.querySelector("#homeOldTestament"),
   homeNewTestament: document.querySelector("#homeNewTestament"),
+  homeGoogleLoginButton: document.querySelector("#homeGoogleLoginButton"),
+  homeGoogleSignupButton: document.querySelector("#homeGoogleSignupButton"),
+  homeAuthStatus: document.querySelector("#homeAuthStatus"),
   bibleNavigator: document.querySelector(".bible-navigator"),
   bibleReader: document.querySelector('[data-content-section="bible"]'),
   searchInput: document.querySelector("#searchInput"),
@@ -606,8 +609,28 @@ function renderAuthPanel() {
         ? `${state.signedInUser.name} 동기화됨`
         : cloudStatus === "load-failed" || cloudStatus === "save-failed"
           ? `${state.signedInUser.name} 로그인됨 · 브라우저 저장 중`
-          : `${state.signedInUser.name} 로그인됨`
+      : `${state.signedInUser.name} 로그인됨`
       : "Google 동기화 가능";
+  els.homeGoogleLoginButton.hidden = signedIn;
+  els.homeGoogleSignupButton.hidden = signedIn;
+  els.homeAuthStatus.textContent = signedIn
+    ? `${state.signedInUser.name} 로그인됨`
+    : "로그인 없이 성경을 읽을 수 있습니다.";
+}
+
+function loginWithGoogle() {
+  authService.login().catch((error) => {
+    const code = error?.code || "";
+    const message = code.includes("unauthorized-domain")
+      ? "로그인 실패: 승인된 도메인을 확인해 주세요"
+      : code.includes("popup-blocked")
+        ? "로그인 실패: 팝업 차단을 해제해 주세요"
+        : code.includes("popup-closed")
+          ? "로그인이 취소되었습니다"
+          : "로그인 실패";
+    els.authStatus.textContent = message;
+    els.homeAuthStatus.textContent = message;
+  });
 }
 
 function subscribeAuthChanges() {
@@ -1779,20 +1802,7 @@ els.compareTranslationSelect2.addEventListener("change", async (event) => {
   state.compareTranslationId2 = event.target.value;
   await renderAfterCompareSelection();
 });
-els.googleLoginButton.addEventListener("click", () => {
-  authService.login().catch((error) => {
-    const code = error?.code || "";
-    if (code.includes("unauthorized-domain")) {
-      els.authStatus.textContent = "로그인 실패: 승인된 도메인을 확인해 주세요";
-    } else if (code.includes("popup-blocked")) {
-      els.authStatus.textContent = "로그인 실패: 팝업 차단을 해제해 주세요";
-    } else if (code.includes("popup-closed")) {
-      els.authStatus.textContent = "로그인이 취소되었습니다";
-    } else {
-      els.authStatus.textContent = "로그인 실패";
-    }
-  });
-});
+els.googleLoginButton.addEventListener("click", loginWithGoogle);
 els.logoutButton.addEventListener("click", () => {
   authService.logout().catch(() => {
     els.authStatus.textContent = "로그아웃 실패";
@@ -1895,6 +1905,8 @@ els.appMenuButtons.forEach((button) => {
 els.homeButton.addEventListener("click", showBibleHome);
 els.homeOldTestament.addEventListener("click", () => openTestament("old"));
 els.homeNewTestament.addEventListener("click", () => openTestament("new"));
+els.homeGoogleLoginButton.addEventListener("click", loginWithGoogle);
+els.homeGoogleSignupButton.addEventListener("click", loginWithGoogle);
 els.gratitudeForm.addEventListener("submit", submitGratitudeNote);
 els.devotionalForm.addEventListener("submit", saveDevotionalNote);
 els.useCurrentPassageButton.addEventListener("click", () => {
