@@ -90,23 +90,23 @@
           </div>
         </section>
 
-        <section class="selectors">
-          <label>
-            <span>성경</span>
-            <select id="bookSelect"></select>
-          </label>
-          <label>
-            <span>장</span>
-            <select id="chapterSelect"></select>
-          </label>
-        </section>
-
-        <section class="book-list" aria-label="성경 목록">
-          <div class="testament-tabs">
-            <button id="oldTab" class="active" type="button">구약</button>
-            <button id="newTab" type="button">신약</button>
+        <section class="bible-navigator" aria-label="성경 장절 선택">
+          <div class="navigator-heading">
+            <span>성경 장절</span>
+            <p id="biblePath" class="bible-path" aria-live="polite"></p>
           </div>
-          <div id="bookList" class="book-buttons"></div>
+          <div class="testament-tabs">
+            <button id="oldTab" class="active" type="button">구약성서</button>
+            <button id="newTab" type="button">신약성서</button>
+          </div>
+          <div class="navigator-step">
+            <span>성경책</span>
+            <div id="bookList" class="book-buttons"></div>
+          </div>
+          <div class="navigator-step">
+            <span>장</span>
+            <div id="chapterList" class="chapter-buttons"></div>
+          </div>
         </section>
 
         <section class="reading-plan" aria-label="성경 읽기표">

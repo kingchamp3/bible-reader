@@ -179,9 +179,9 @@ const els = {
   compareTranslationSelect: document.querySelector("#compareTranslationSelect"),
   compareTranslationSelect2: document.querySelector("#compareTranslationSelect2"),
   sourceAttribution: document.querySelector("#sourceAttribution"),
-  bookSelect: document.querySelector("#bookSelect"),
-  chapterSelect: document.querySelector("#chapterSelect"),
+  biblePath: document.querySelector("#biblePath"),
   bookList: document.querySelector("#bookList"),
+  chapterList: document.querySelector("#chapterList"),
   oldTab: document.querySelector("#oldTab"),
   newTab: document.querySelector("#newTab"),
   verseList: document.querySelector("#verseList"),
@@ -1055,30 +1055,10 @@ function renderReadingPlan() {
     .join("");
 }
 
-function renderBookSelect() {
-  const translation = selectedTranslation();
-  els.bookSelect.replaceChildren(
-    ...translation.books.map((book) => {
-      const option = document.createElement("option");
-      option.value = book.id;
-      option.textContent = book.name;
-      return option;
-    }),
-  );
-  els.bookSelect.value = state.selectedBookId;
-}
-
-function renderChapterSelect() {
+function renderBiblePath() {
   const book = selectedBook();
-  els.chapterSelect.replaceChildren(
-    ...book.chapters.map((chapter) => {
-      const option = document.createElement("option");
-      option.value = chapter.chapter;
-      option.textContent = `${chapter.chapter}장`;
-      return option;
-    }),
-  );
-  els.chapterSelect.value = state.selectedChapter;
+  const testamentName = book.testament === "old" ? "구약성서" : "신약성서";
+  els.biblePath.textContent = `성경 > ${testamentName} > ${book.name} > ${state.selectedChapter}장`;
 }
 
 function renderTabs() {
@@ -1106,6 +1086,20 @@ function renderBookButtons() {
       button.className = book.id === state.selectedBookId ? "active" : "";
       button.dataset.bookId = book.id;
       button.textContent = book.name;
+      return button;
+    }),
+  );
+}
+
+function renderChapterButtons() {
+  const book = selectedBook();
+  els.chapterList.replaceChildren(
+    ...book.chapters.map((chapter) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = chapter.chapter === state.selectedChapter ? "active" : "";
+      button.dataset.chapter = chapter.chapter;
+      button.textContent = `${chapter.chapter}장`;
       return button;
     }),
   );
@@ -1734,10 +1728,10 @@ function render() {
   renderMemberPanel();
   renderTranslationSelect();
   renderCompareTranslationSelect();
-  renderBookSelect();
-  renderChapterSelect();
+  renderBiblePath();
   renderTabs();
   renderBookButtons();
+  renderChapterButtons();
   renderSourceAttribution();
   renderDailyVerse();
   renderGratitudePanel();
@@ -1793,24 +1787,24 @@ els.lastReadButton.addEventListener("click", async () => {
   setBook(lastRead.bookId, lastRead.chapter);
 });
 els.chapterReadToggle.addEventListener("click", toggleCurrentChapterRead);
-els.bookSelect.addEventListener("change", (event) => setBook(event.target.value));
-els.chapterSelect.addEventListener("change", (event) => setChapter(event.target.value));
 els.oldTab.addEventListener("click", () => {
-  if (!selectedTranslation().books.some((book) => book.testament === "old")) return;
-  state.activeTestament = "old";
-  renderTabs();
-  renderBookButtons();
+  const firstBook = selectedTranslation().books.find((book) => book.testament === "old");
+  if (firstBook) setBook(firstBook.id);
 });
 els.newTab.addEventListener("click", () => {
-  if (!selectedTranslation().books.some((book) => book.testament === "new")) return;
-  state.activeTestament = "new";
-  renderTabs();
-  renderBookButtons();
+  const firstBook = selectedTranslation().books.find((book) => book.testament === "new");
+  if (firstBook) setBook(firstBook.id);
 });
 els.bookList.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-book-id]");
   if (button) {
     setBook(button.dataset.bookId);
+  }
+});
+els.chapterList.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-chapter]");
+  if (button) {
+    setChapter(button.dataset.chapter);
   }
 });
 els.readingPlan.addEventListener("click", (event) => {
