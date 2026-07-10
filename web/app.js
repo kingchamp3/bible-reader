@@ -152,6 +152,9 @@ const recommendedDailyVerseRefs = [
 const els = {
   appMenuButtons: document.querySelectorAll("[data-app-section]"),
   contentSections: document.querySelectorAll("[data-content-section]"),
+  homeButton: document.querySelector("#homeButton"),
+  homeOldTestament: document.querySelector("#homeOldTestament"),
+  homeNewTestament: document.querySelector("#homeNewTestament"),
   bibleNavigator: document.querySelector(".bible-navigator"),
   bibleReader: document.querySelector('[data-content-section="bible"]'),
   searchInput: document.querySelector("#searchInput"),
@@ -681,6 +684,20 @@ function setChapter(chapter) {
   state.highlightFilter = null;
   state.lastTextSelection = null;
   render();
+}
+
+function openTestament(testament) {
+  const firstBook = selectedTranslation().books.find((book) => book.testament === testament);
+  if (!firstBook) return;
+
+  document.body.dataset.bibleView = "reader";
+  showAppSection("bible");
+  setBook(firstBook.id);
+}
+
+function showBibleHome() {
+  document.body.dataset.bibleView = "home";
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function toggleBookmark(bookId, chapter, verse) {
@@ -1875,6 +1892,9 @@ els.appMenuButtons.forEach((button) => {
     }
   });
 });
+els.homeButton.addEventListener("click", showBibleHome);
+els.homeOldTestament.addEventListener("click", () => openTestament("old"));
+els.homeNewTestament.addEventListener("click", () => openTestament("new"));
 els.gratitudeForm.addEventListener("submit", submitGratitudeNote);
 els.devotionalForm.addEventListener("submit", saveDevotionalNote);
 els.useCurrentPassageButton.addEventListener("click", () => {

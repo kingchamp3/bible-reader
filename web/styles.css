@@ -64,6 +64,59 @@ select {
   cursor: pointer;
 }
 
+.bible-home {
+  align-items: center;
+  display: grid;
+  min-height: 100vh;
+  padding: 28px;
+}
+
+.bible-home-content {
+  margin: 0 auto;
+  max-width: 480px;
+  width: 100%;
+}
+
+.bible-home h1 {
+  color: var(--ink);
+  font-size: 32px;
+  letter-spacing: 0;
+  margin: 0 0 26px;
+  text-align: center;
+}
+
+.bible-home-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.bible-home-actions button {
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  min-height: 58px;
+}
+
+.bible-home-actions button:hover,
+.bible-home-actions button:focus-visible {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--panel);
+}
+
+body[data-bible-view="home"] .main-menu,
+body[data-bible-view="home"] .app-shell {
+  display: none;
+}
+
+body[data-bible-view="reader"] .bible-home {
+  display: none;
+}
+
 .main-menu {
   align-items: center;
   background: rgba(255, 253, 248, 0.94);

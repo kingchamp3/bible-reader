@@ -4,10 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>성경을 읽다 - 성경 번역본</title>
-    <link rel="stylesheet" href="./styles.css?v=navigation-flow-v1" />
+    <link rel="stylesheet" href="./styles.css?v=home-selector-v1" />
   </head>
-  <body>
+  <body data-bible-view="home">
+    <section class="bible-home" aria-label="성경 선택">
+      <div class="bible-home-content">
+        <h1>성경을 읽다</h1>
+        <div class="bible-home-actions">
+          <button id="homeOldTestament" type="button">구약성서</button>
+          <button id="homeNewTestament" type="button">신약성서</button>
+        </div>
+      </div>
+    </section>
+
     <nav class="main-menu" aria-label="주요 메뉴">
+      <button id="homeButton" type="button">처음</button>
       <button class="active" type="button" data-app-section="bible">성경 읽기</button>
       <button type="button" data-app-section="devotional">묵상 노트</button>
       <button type="button" data-app-section="gratitude">감사 한줄</button>
@@ -188,9 +199,9 @@
 
     <script src="./firebase-config-9ec46.js"></script>
     <script type="module" src="./firebase-auth.js?v=security-audit-v1"></script>
-    <script src="./bibles-data.js?v=navigation-flow-v1"></script>
-    <script src="./sblgnt-loader.js?v=navigation-flow-v1"></script>
-    <script src="./wlc-loader.js?v=navigation-flow-v1"></script>
-    <script type="module" src="./app.js?v=navigation-flow-v1"></script>
+    <script src="./bibles-data.js?v=home-selector-v1"></script>
+    <script src="./sblgnt-loader.js?v=home-selector-v1"></script>
+    <script src="./wlc-loader.js?v=home-selector-v1"></script>
+    <script type="module" src="./app.js?v=home-selector-v1"></script>
   </body>
 </html>
