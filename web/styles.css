@@ -524,6 +524,11 @@ textarea {
 .bible-navigator {
   border-top: 1px solid var(--line);
   padding-top: 18px;
+  scroll-margin-top: 84px;
+}
+
+.content-section[data-content-section="bible"] {
+  scroll-margin-top: 84px;
 }
 
 .navigator-heading {
