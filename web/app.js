@@ -724,6 +724,12 @@ function showBibleHome() {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+els.homeButton?.addEventListener("click", showBibleHome);
+els.homeOldTestament?.addEventListener("click", () => openTestament("old"));
+els.homeNewTestament?.addEventListener("click", () => openTestament("new"));
+els.homeGoogleLoginButton?.addEventListener("click", loginWithGoogle);
+els.homeGoogleSignupButton?.addEventListener("click", loginWithGoogle);
+
 function toggleBookmark(bookId, chapter, verse) {
   const id = bookmarkId(bookId, chapter, verse);
   if (state.bookmarks.has(id)) {
@@ -1864,14 +1870,16 @@ els.highlightFilter.addEventListener("click", (event) => {
   renderHeader();
   renderVerses();
 });
-els.readerHighlightPalette.addEventListener("mousedown", (event) => {
-  if (event.target.closest("button[data-reader-highlight]")) event.preventDefault();
-});
-els.readerHighlightPalette.addEventListener("touchstart", captureTextSelection, { passive: true });
-els.readerHighlightPalette.addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-reader-highlight]");
-  if (button) applyReaderHighlight(button.dataset.readerHighlight);
-});
+if (els.readerHighlightPalette) {
+  els.readerHighlightPalette.addEventListener("mousedown", (event) => {
+    if (event.target.closest("button[data-reader-highlight]")) event.preventDefault();
+  });
+  els.readerHighlightPalette.addEventListener("touchstart", captureTextSelection, { passive: true });
+  els.readerHighlightPalette.addEventListener("click", (event) => {
+    const button = event.target.closest("button[data-reader-highlight]");
+    if (button) applyReaderHighlight(button.dataset.readerHighlight);
+  });
+}
 els.appMenuButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const sectionId = button.dataset.appSection;
@@ -1883,11 +1891,6 @@ els.appMenuButtons.forEach((button) => {
     }
   });
 });
-els.homeButton.addEventListener("click", showBibleHome);
-els.homeOldTestament.addEventListener("click", () => openTestament("old"));
-els.homeNewTestament.addEventListener("click", () => openTestament("new"));
-els.homeGoogleLoginButton.addEventListener("click", loginWithGoogle);
-els.homeGoogleSignupButton.addEventListener("click", loginWithGoogle);
 els.gratitudeForm.addEventListener("submit", submitGratitudeNote);
 els.devotionalForm.addEventListener("submit", saveDevotionalNote);
 els.useCurrentPassageButton.addEventListener("click", () => {
