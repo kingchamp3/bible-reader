@@ -1082,14 +1082,17 @@ textarea {
 
 .verse-actions {
   align-self: start;
-  display: grid;
-  gap: 8px;
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .verse-save {
   background: transparent;
   color: var(--muted);
-  min-height: 38px;
+  min-height: 30px;
+  padding: 0 6px;
 }
 
 .verse-save.saved {
