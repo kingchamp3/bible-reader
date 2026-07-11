@@ -153,6 +153,10 @@ const els = {
   appMenuButtons: document.querySelectorAll("[data-app-section]"),
   contentSections: document.querySelectorAll("[data-content-section]"),
   homeButton: document.querySelector("#homeButton"),
+  toolsMenuButton: document.querySelector("#toolsMenuButton"),
+  closeSidebarButton: document.querySelector("#closeSidebarButton"),
+  sidebarBackdrop: document.querySelector("#sidebarBackdrop"),
+  sidebar: document.querySelector(".sidebar"),
   homeOldTestament: document.querySelector("#homeOldTestament"),
   homeNewTestament: document.querySelector("#homeNewTestament"),
   homeGoogleLoginButton: document.querySelector("#homeGoogleLoginButton"),
@@ -217,6 +221,11 @@ function showAppSection(sectionId) {
   els.contentSections.forEach((section) => {
     section.classList.toggle("active", section.dataset.contentSection === nextSection);
   });
+}
+
+function setSidebarOpen(open) {
+  document.body.dataset.sidebarOpen = open ? "true" : "false";
+  els.toolsMenuButton?.setAttribute("aria-expanded", String(open));
 }
 
 function selectedTranslation() {
@@ -715,11 +724,13 @@ function openTestament(testament) {
   if (!firstBook) return;
 
   document.body.dataset.bibleView = "reader";
+  setSidebarOpen(false);
   showAppSection("bible");
   setBook(firstBook.id);
 }
 
 function showBibleHome() {
+  setSidebarOpen(false);
   document.body.dataset.bibleView = "home";
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -1813,6 +1824,7 @@ els.chapterList.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-chapter]");
   if (button) {
     setChapter(button.dataset.chapter);
+    setSidebarOpen(false);
     requestAnimationFrame(() => {
       els.bibleReader.scrollIntoView({ behavior: "smooth", block: "start" });
     });
@@ -1885,11 +1897,24 @@ els.appMenuButtons.forEach((button) => {
     const sectionId = button.dataset.appSection;
     showAppSection(sectionId);
     if (sectionId === "bible") {
+      setSidebarOpen(true);
       requestAnimationFrame(() => {
         els.bibleNavigator.scrollIntoView({ behavior: "smooth", block: "start" });
       });
+    } else {
+      setSidebarOpen(false);
     }
   });
+});
+els.toolsMenuButton?.addEventListener("click", () => {
+  const opening = document.body.dataset.sidebarOpen !== "true";
+  setSidebarOpen(opening);
+  if (opening) requestAnimationFrame(() => els.sidebar.scrollTo({ top: 0, behavior: "smooth" }));
+});
+els.closeSidebarButton?.addEventListener("click", () => setSidebarOpen(false));
+els.sidebarBackdrop?.addEventListener("click", () => setSidebarOpen(false));
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") setSidebarOpen(false);
 });
 els.gratitudeForm.addEventListener("submit", submitGratitudeNote);
 els.devotionalForm.addEventListener("submit", saveDevotionalNote);
