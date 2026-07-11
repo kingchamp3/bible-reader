@@ -1899,7 +1899,7 @@ els.appMenuButtons.forEach((button) => {
     if (sectionId === "bible") {
       setSidebarOpen(true);
       requestAnimationFrame(() => {
-        els.bibleNavigator.scrollIntoView({ behavior: "smooth", block: "start" });
+        els.bibleNavigator.scrollIntoView({ behavior: "auto", block: "start" });
       });
     } else {
       setSidebarOpen(false);
@@ -1909,7 +1909,7 @@ els.appMenuButtons.forEach((button) => {
 els.toolsMenuButton?.addEventListener("click", () => {
   const opening = document.body.dataset.sidebarOpen !== "true";
   setSidebarOpen(opening);
-  if (opening) requestAnimationFrame(() => els.sidebar.scrollTo({ top: 0, behavior: "smooth" }));
+  if (opening) requestAnimationFrame(() => els.sidebar.scrollTo({ top: 0, behavior: "auto" }));
 });
 els.closeSidebarButton?.addEventListener("click", () => setSidebarOpen(false));
 els.sidebarBackdrop?.addEventListener("click", () => setSidebarOpen(false));
