@@ -160,6 +160,7 @@ const els = {
   homeAuthStatus: document.querySelector("#homeAuthStatus"),
   bibleNavigator: document.querySelector(".bible-navigator"),
   bibleReader: document.querySelector('[data-content-section="bible"]'),
+  readerHighlightPalette: document.querySelector("#readerHighlightPalette"),
   searchInput: document.querySelector("#searchInput"),
   googleLoginButton: document.querySelector("#googleLoginButton"),
   logoutButton: document.querySelector("#logoutButton"),
@@ -836,6 +837,15 @@ function toggleHighlight(bookId, chapter, verse, color) {
   renderVerses();
 }
 
+function applyReaderHighlight(color) {
+  captureTextSelection();
+  const selection = state.lastTextSelection;
+  if (!selection || selection.translationId !== state.selectedTranslationId) return;
+
+  const { bookId, chapter, verse } = parseBookmarkId(selection.verseId);
+  toggleHighlight(bookId, chapter, verse, color);
+}
+
 function editVerseNote(bookId, chapter, verse) {
   const id = bookmarkId(bookId, chapter, verse);
   state.editingNoteId = state.editingNoteId === id ? null : id;
@@ -1408,52 +1418,15 @@ function applyHighlight(row, id) {
   }
 }
 
-function hasTextHighlightColor(verseId, color) {
-  const key = textHighlightKey(state.selectedTranslationId, verseId);
-  return (state.textHighlights[key] || []).some((item) => item.color === color);
-}
-
 function createVerseActions({ bookId, chapter, verse, marked }) {
   const actions = document.createElement("div");
   actions.className = "verse-actions";
-  const id = bookmarkId(bookId, chapter, verse);
 
   const save = document.createElement("button");
   save.type = "button";
   save.className = `verse-save${marked ? " saved" : ""}`;
   save.textContent = marked ? "저장됨" : "저장";
   save.addEventListener("click", () => toggleBookmark(bookId, chapter, verse));
-
-  const palette = document.createElement("div");
-  palette.className = "highlight-palette";
-  [
-    ["yellow", "노랑"],
-    ["green", "초록"],
-    ["pink", "분홍"],
-    ["blue", "파랑"],
-  ].forEach(([color, label]) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = `highlight-swatch highlight-${color}`;
-    button.dataset.highlightColor = color;
-    button.title = `${label} 형광펜`;
-    button.setAttribute("aria-label", `${label} 형광펜`);
-    button.classList.toggle("active", state.highlights[id] === color || hasTextHighlightColor(id, color));
-    button.addEventListener("mousedown", (event) => event.preventDefault());
-    button.addEventListener("touchstart", () => captureTextSelection(), { passive: true });
-    button.addEventListener("click", () => toggleHighlight(bookId, chapter, verse, color));
-    palette.append(button);
-  });
-
-  const clear = document.createElement("button");
-  clear.type = "button";
-  clear.className = "highlight-clear";
-  clear.dataset.highlightColor = "clear";
-  clear.textContent = "지우기";
-  clear.addEventListener("mousedown", (event) => event.preventDefault());
-  clear.addEventListener("touchstart", () => captureTextSelection(), { passive: true });
-  clear.addEventListener("click", () => toggleHighlight(bookId, chapter, verse, "clear"));
-  palette.append(clear);
 
   const note = document.createElement("button");
   note.type = "button";
@@ -1462,7 +1435,7 @@ function createVerseActions({ bookId, chapter, verse, marked }) {
   note.textContent = state.notes[bookmarkId(bookId, chapter, verse)] ? "메모됨" : "메모";
   note.addEventListener("click", () => editVerseNote(bookId, chapter, verse));
 
-  actions.append(save, palette, note);
+  actions.append(save, note);
   return actions;
 }
 
@@ -1890,6 +1863,14 @@ els.highlightFilter.addEventListener("click", (event) => {
   els.searchInput.value = "";
   renderHeader();
   renderVerses();
+});
+els.readerHighlightPalette.addEventListener("mousedown", (event) => {
+  if (event.target.closest("button[data-reader-highlight]")) event.preventDefault();
+});
+els.readerHighlightPalette.addEventListener("touchstart", captureTextSelection, { passive: true });
+els.readerHighlightPalette.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-reader-highlight]");
+  if (button) applyReaderHighlight(button.dataset.readerHighlight);
 });
 els.appMenuButtons.forEach((button) => {
   button.addEventListener("click", () => {

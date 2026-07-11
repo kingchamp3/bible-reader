@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>성경을 읽다 - 성경 번역본</title>
-    <link rel="stylesheet" href="./styles.css?v=home-auth-v1" />
+    <link rel="stylesheet" href="./styles.css?v=reader-highlighter-v1" />
   </head>
   <body data-bible-view="home">
     <section class="bible-home" aria-label="성경 선택">
@@ -146,6 +146,17 @@
             </div>
           </header>
 
+          <section class="reader-highlighter" aria-label="형광펜">
+            <span>형광펜</span>
+            <div id="readerHighlightPalette" class="reader-highlight-palette">
+              <button class="highlight-swatch highlight-yellow" type="button" data-reader-highlight="yellow" aria-label="노랑 형광펜" title="노랑 형광펜"></button>
+              <button class="highlight-swatch highlight-green" type="button" data-reader-highlight="green" aria-label="초록 형광펜" title="초록 형광펜"></button>
+              <button class="highlight-swatch highlight-pink" type="button" data-reader-highlight="pink" aria-label="분홍 형광펜" title="분홍 형광펜"></button>
+              <button class="highlight-swatch highlight-blue" type="button" data-reader-highlight="blue" aria-label="파랑 형광펜" title="파랑 형광펜"></button>
+              <button class="highlight-clear" type="button" data-reader-highlight="clear">지우기</button>
+            </div>
+          </section>
+
           <section id="resultSummary" class="result-summary" hidden></section>
           <article id="verseList" class="verse-list" aria-live="polite"></article>
         </section>
@@ -206,9 +217,9 @@
 
     <script src="./firebase-config-9ec46.js"></script>
     <script type="module" src="./firebase-auth.js?v=security-audit-v1"></script>
-    <script src="./bibles-data.js?v=home-auth-v1"></script>
-    <script src="./sblgnt-loader.js?v=home-auth-v1"></script>
-    <script src="./wlc-loader.js?v=home-auth-v1"></script>
-    <script type="module" src="./app.js?v=home-auth-v1"></script>
+    <script src="./bibles-data.js?v=reader-highlighter-v1"></script>
+    <script src="./sblgnt-loader.js?v=reader-highlighter-v1"></script>
+    <script src="./wlc-loader.js?v=reader-highlighter-v1"></script>
+    <script type="module" src="./app.js?v=reader-highlighter-v1"></script>
   </body>
 </html>

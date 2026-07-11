@@ -705,6 +705,29 @@ textarea {
   width: 100%;
 }
 
+.reader-highlighter {
+  align-items: center;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 10px 14px;
+}
+
+.reader-highlighter > span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.reader-highlight-palette {
+  align-items: center;
+  display: flex;
+  gap: 7px;
+}
+
 .content-section {
   display: none;
 }
@@ -1089,12 +1112,6 @@ textarea {
   color: var(--panel);
 }
 
-.highlight-palette {
-  display: grid;
-  gap: 5px;
-  grid-template-columns: repeat(2, 24px);
-}
-
 .highlight-swatch {
   border: 1px solid var(--line);
   height: 24px;
@@ -1127,9 +1144,8 @@ textarea {
   background: transparent;
   color: var(--muted);
   font-size: 12px;
-  grid-column: 1 / -1;
   min-height: 24px;
-  padding: 0;
+  padding: 0 4px;
 }
 
 .empty {
