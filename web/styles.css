@@ -1307,13 +1307,12 @@ body[data-bible-view="reader"] .sidebar {
   position: fixed;
   top: 0;
   transform: translateX(-105%);
-  transition: transform 180ms ease;
   width: min(380px, calc(100vw - 36px));
   z-index: 40;
 }
 
 body[data-sidebar-open="true"] .sidebar {
-  transform: translateX(0);
+  transform: translateX(0) !important;
 }
 
 .sidebar-topbar {
