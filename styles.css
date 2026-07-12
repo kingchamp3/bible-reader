@@ -820,7 +820,7 @@ textarea {
   border-bottom: 1px solid var(--line);
   display: grid;
   gap: 14px;
-  grid-template-columns: 96px minmax(0, 1fr) 96px;
+  grid-template-columns: 96px minmax(0, 1fr);
   padding: 18px 20px;
 }
 
@@ -1080,37 +1080,7 @@ textarea {
   padding: 0 12px;
 }
 
-.verse-actions {
-  align-self: start;
-  align-items: center;
-  display: flex;
-  justify-self: end;
-  position: relative;
-  z-index: 3;
-}
-
-.verse-more-button {
-  align-items: center;
-  background: transparent;
-  border: 0;
-  border-radius: 8px;
-  color: var(--muted);
-  display: inline-flex;
-  font-size: 22px;
-  justify-content: center;
-  line-height: 1;
-  min-height: 34px;
-  min-width: 34px;
-  padding: 0;
-}
-
-.verse-more-button:hover,
-.verse-more-button:focus-visible {
-  background: var(--panel-soft);
-  color: var(--green);
-}
-
-.verse-action-menu {
+.selection-action-menu {
   align-items: center;
   background: var(--panel);
   border: 1px solid var(--line);
@@ -1119,37 +1089,24 @@ textarea {
   display: flex;
   gap: 4px;
   padding: 4px;
-  position: absolute;
-  right: 0;
-  top: 38px;
+  position: fixed;
   white-space: nowrap;
+  z-index: 60;
 }
 
-.verse-save {
-  background: transparent;
-  color: var(--muted);
-  min-height: 30px;
-  padding: 0 6px;
+.selection-action-menu[hidden] {
+  display: none;
 }
 
-.verse-save.saved {
-  color: #2f8f5b;
-}
-
-.verse-note-button {
+.selection-action-menu button {
   background: var(--green-soft);
   border: 0;
   border-radius: 8px;
   color: var(--green);
   font-size: 12px;
   font-weight: 900;
-  min-height: 30px;
-  padding: 0 6px;
-}
-
-.verse-note-button.has-note {
-  background: var(--gold);
-  color: var(--panel);
+  min-height: 32px;
+  padding: 0 10px;
 }
 
 .highlight-swatch {
@@ -1245,11 +1202,6 @@ textarea {
 
   .verse-row {
     grid-template-columns: 72px minmax(0, 1fr);
-  }
-
-  .verse-actions {
-    grid-column: 2;
-    justify-self: end;
   }
 
   .compare-grid {
