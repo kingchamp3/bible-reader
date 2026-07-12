@@ -91,7 +91,6 @@ const state = {
   notes: {},
   devotionalNotes: {},
   editingNoteId: null,
-  openVerseActionsId: null,
   lastTextSelection: null,
   gratitudeNotes: [],
   gratitudeStatus: "",
@@ -165,6 +164,7 @@ const els = {
   homeAuthStatus: document.querySelector("#homeAuthStatus"),
   bibleNavigator: document.querySelector(".bible-navigator"),
   bibleReader: document.querySelector('[data-content-section="bible"]'),
+  selectionActionMenu: document.querySelector("#selectionActionMenu"),
   readerHighlightPalette: document.querySelector("#readerHighlightPalette"),
   searchInput: document.querySelector("#searchInput"),
   googleLoginButton: document.querySelector("#googleLoginButton"),
@@ -692,7 +692,6 @@ async function setTranslation(translationId) {
   els.searchInput.value = "";
   state.showFavorites = false;
   state.highlightFilter = null;
-  state.openVerseActionsId = null;
   state.lastTextSelection = null;
   render();
 }
@@ -708,7 +707,6 @@ function setBook(bookId, chapter = 1) {
   els.searchInput.value = "";
   state.showFavorites = false;
   state.highlightFilter = null;
-  state.openVerseActionsId = null;
   state.lastTextSelection = null;
   render();
 }
@@ -718,7 +716,6 @@ function setChapter(chapter) {
   els.searchInput.value = "";
   state.showFavorites = false;
   state.highlightFilter = null;
-  state.openVerseActionsId = null;
   state.lastTextSelection = null;
   render();
 }
@@ -779,21 +776,44 @@ function selectedVerseTextRange(verseId) {
   return { start, end: start + selectedLength };
 }
 
+function hideSelectionActionMenu() {
+  els.selectionActionMenu.hidden = true;
+}
+
+function positionSelectionActionMenu(rect) {
+  const menu = els.selectionActionMenu;
+  menu.hidden = false;
+  const menuRect = menu.getBoundingClientRect();
+  const left = Math.min(Math.max(8, rect.left + rect.width / 2 - menuRect.width / 2), window.innerWidth - menuRect.width - 8);
+  const top = rect.top - menuRect.height - 8 >= 8 ? rect.top - menuRect.height - 8 : rect.bottom + 8;
+  menu.style.left = `${left}px`;
+  menu.style.top = `${top}px`;
+}
+
 function captureTextSelection() {
   const selection = window.getSelection();
-  if (!selection || selection.isCollapsed || selection.rangeCount === 0) return;
+  if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
+    hideSelectionActionMenu();
+    return;
+  }
 
   const range = selection.getRangeAt(0);
   const startBody = closestVerseTextNode(range.startContainer);
   const endBody = closestVerseTextNode(range.endContainer);
-  if (!startBody || startBody !== endBody || !startBody.dataset.verseId) return;
+  if (!startBody || startBody !== endBody || !startBody.dataset.verseId) {
+    hideSelectionActionMenu();
+    return;
+  }
 
   const before = document.createRange();
   before.selectNodeContents(startBody);
   before.setEnd(range.startContainer, range.startOffset);
   const start = before.toString().length;
   const selectedLength = range.toString().length;
-  if (selectedLength <= 0) return;
+  if (selectedLength <= 0) {
+    hideSelectionActionMenu();
+    return;
+  }
 
   state.lastTextSelection = {
     translationId: state.selectedTranslationId,
@@ -801,6 +821,7 @@ function captureTextSelection() {
     start,
     end: start + selectedLength,
   };
+  positionSelectionActionMenu(range.getBoundingClientRect());
 }
 
 function mergeTextHighlights(items) {
@@ -829,6 +850,7 @@ function setTextHighlight(translationId, verseId, range, color) {
     state.textHighlights[key] = mergeTextHighlights([...existing, { ...range, color }]);
   }
   window.getSelection()?.removeAllRanges();
+  hideSelectionActionMenu();
   persistMembers();
   renderVerses();
 }
@@ -873,9 +895,10 @@ function editVerseNote(bookId, chapter, verse) {
   renderVerses();
 }
 
-function toggleVerseActions(id) {
-  state.openVerseActionsId = state.openVerseActionsId === id ? null : id;
-  renderVerses();
+function selectedVerseActionTarget() {
+  const selection = state.lastTextSelection;
+  if (!selection || selection.translationId !== state.selectedTranslationId) return null;
+  return parseBookmarkId(selection.verseId);
 }
 
 function saveVerseNote(id, value) {
@@ -1444,48 +1467,6 @@ function applyHighlight(row, id) {
   }
 }
 
-function createVerseActions({ bookId, chapter, verse, marked }) {
-  const actions = document.createElement("div");
-  actions.className = "verse-actions";
-  const id = bookmarkId(bookId, chapter, verse);
-  const isOpen = state.openVerseActionsId === id;
-
-  const more = document.createElement("button");
-  more.type = "button";
-  more.className = "verse-more-button";
-  more.textContent = "⋮";
-  more.title = "구절 메뉴";
-  more.setAttribute("aria-label", "구절 메뉴");
-  more.setAttribute("aria-expanded", String(isOpen));
-  more.addEventListener("click", () => toggleVerseActions(id));
-  actions.append(more);
-
-  if (!isOpen) return actions;
-
-  const menu = document.createElement("div");
-  menu.className = "verse-action-menu";
-
-  const save = document.createElement("button");
-  save.type = "button";
-  save.className = `verse-save${marked ? " saved" : ""}`;
-  save.textContent = marked ? "저장됨" : "저장";
-  save.addEventListener("click", () => toggleBookmark(bookId, chapter, verse));
-
-  const note = document.createElement("button");
-  note.type = "button";
-  note.dataset.noteButton = id;
-  note.className = `verse-note-button${state.notes[id] ? " has-note" : ""}`;
-  note.textContent = state.notes[id] ? "메모됨" : "메모";
-  note.addEventListener("click", () => {
-    state.openVerseActionsId = null;
-    editVerseNote(bookId, chapter, verse);
-  });
-
-  menu.append(save, note);
-  actions.append(menu);
-  return actions;
-}
-
 function createNoteElement(id) {
   const noteText = state.notes[id];
   if (!noteText) return null;
@@ -1591,7 +1572,7 @@ function createVerseRow({ bookId, chapter, verse, text, tokens, refLabel, search
     content.append(note);
   }
 
-  row.append(ref, content, createVerseActions({ bookId, chapter, verse, marked }));
+  row.append(ref, content);
   return row;
 }
 
@@ -1685,11 +1666,12 @@ function createCompareVerseRow(verseData) {
     content.append(note);
   }
 
-  row.append(ref, content, createVerseActions({ bookId, chapter, verse, marked }));
+  row.append(ref, content);
   return row;
 }
 
 function renderVerses() {
+  hideSelectionActionMenu();
   const query = els.searchInput.value.trim();
   const lowerQuery = query.toLowerCase();
   els.verseList.innerHTML = "";
@@ -1917,7 +1899,7 @@ if (els.readerHighlightPalette) {
     if (event.target.closest("button[data-reader-highlight]")) event.preventDefault();
   });
   els.readerHighlightPalette.addEventListener("touchstart", captureTextSelection, { passive: true });
-  els.readerHighlightPalette.addEventListener("click", (event) => {
+els.readerHighlightPalette.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-reader-highlight]");
     if (button) applyReaderHighlight(button.dataset.readerHighlight);
   });
@@ -1936,6 +1918,23 @@ els.appMenuButtons.forEach((button) => {
     }
   });
 });
+els.selectionActionMenu.addEventListener("mousedown", (event) => event.preventDefault());
+els.selectionActionMenu.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-selection-action]");
+  if (!button) return;
+
+  const target = selectedVerseActionTarget();
+  hideSelectionActionMenu();
+  window.getSelection()?.removeAllRanges();
+  state.lastTextSelection = null;
+  if (!target) return;
+
+  if (button.dataset.selectionAction === "save") {
+    toggleBookmark(target.bookId, target.chapter, target.verse);
+  } else if (button.dataset.selectionAction === "note") {
+    editVerseNote(target.bookId, target.chapter, target.verse);
+  }
+});
 els.toolsMenuButton?.addEventListener("click", () => {
   const opening = document.body.dataset.sidebarOpen !== "true";
   setSidebarOpen(opening);
@@ -1944,7 +1943,10 @@ els.toolsMenuButton?.addEventListener("click", () => {
 els.closeSidebarButton?.addEventListener("click", () => setSidebarOpen(false));
 els.sidebarBackdrop?.addEventListener("click", () => setSidebarOpen(false));
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") setSidebarOpen(false);
+  if (event.key === "Escape") {
+    setSidebarOpen(false);
+    hideSelectionActionMenu();
+  }
 });
 els.gratitudeForm.addEventListener("submit", submitGratitudeNote);
 els.devotionalForm.addEventListener("submit", saveDevotionalNote);
@@ -1954,6 +1956,7 @@ els.useCurrentPassageButton.addEventListener("click", () => {
 });
 
 document.addEventListener("selectionchange", captureTextSelection);
+document.addEventListener("scroll", hideSelectionActionMenu, true);
 
 showAppSection("bible");
 loadActiveMember();
