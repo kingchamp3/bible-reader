@@ -961,6 +961,7 @@ function renderDailyVerse() {
   const verse = dailyVerse();
   els.dailyVerseButton.textContent = `${verse.bookName} ${verse.chapter}:${verse.verse} ${verse.text}`;
   els.dailyVerseButton.onclick = () => {
+    showAppSection("bible");
     setBook(verse.bookId, verse.chapter);
   };
 }

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>성경을 읽다 - 성경 번역본</title>
-    <link rel="stylesheet" href="./styles.css?v=selection-menu-v2" />
+    <link rel="stylesheet" href="./styles.css?v=today-menu-v1" />
   </head>
   <body data-bible-view="home">
     <section class="bible-home" aria-label="성경 선택">
@@ -27,6 +27,7 @@
     <nav class="main-menu" aria-label="주요 메뉴">
       <button id="homeButton" type="button">처음</button>
       <button class="active" type="button" data-app-section="bible">성경</button>
+      <button type="button" data-app-section="today">오늘</button>
       <button type="button" data-app-section="devotional">묵상</button>
       <button type="button" data-app-section="gratitude">감사</button>
       <button id="toolsMenuButton" type="button" aria-controls="appSidebar" aria-expanded="false">메뉴</button>
@@ -62,11 +63,6 @@
             <button id="lastReadButton" type="button">최근 위치</button>
             <button id="chapterReadToggle" type="button">현재 장 체크</button>
           </div>
-        </section>
-
-        <section class="daily-card" id="dailyVerseCard">
-          <span>오늘의 말씀</span>
-          <button id="dailyVerseButton" type="button">불러오는 중</button>
         </section>
 
         <label class="search-box">
@@ -167,6 +163,13 @@
           <article id="verseList" class="verse-list" aria-live="polite"></article>
         </section>
 
+        <section class="content-section today-panel" data-content-section="today" aria-label="오늘의 말씀">
+          <section class="daily-card" id="dailyVerseCard">
+            <span>오늘의 말씀</span>
+            <button id="dailyVerseButton" type="button">불러오는 중</button>
+          </section>
+        </section>
+
         <section class="content-section menu-panel" data-content-section="devotional" aria-label="묵상 노트">
           <header class="menu-panel-header">
             <p class="reader-meta">기록</p>
@@ -227,9 +230,9 @@
 
     <script src="./firebase-config-9ec46.js"></script>
     <script type="module" src="./firebase-auth.js?v=security-audit-v1"></script>
-    <script src="./bibles-data.js?v=selection-menu-v2"></script>
-    <script src="./sblgnt-loader.js?v=selection-menu-v2"></script>
-    <script src="./wlc-loader.js?v=selection-menu-v2"></script>
-    <script type="module" src="./app.js?v=selection-menu-v2"></script>
+    <script src="./bibles-data.js?v=today-menu-v1"></script>
+    <script src="./sblgnt-loader.js?v=today-menu-v1"></script>
+    <script src="./wlc-loader.js?v=today-menu-v1"></script>
+    <script type="module" src="./app.js?v=today-menu-v1"></script>
   </body>
 </html>
