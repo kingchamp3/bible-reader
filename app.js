@@ -91,6 +91,7 @@ const state = {
   notes: {},
   devotionalNotes: {},
   editingNoteId: null,
+  openVerseActionsId: null,
   lastTextSelection: null,
   gratitudeNotes: [],
   gratitudeStatus: "",
@@ -691,6 +692,7 @@ async function setTranslation(translationId) {
   els.searchInput.value = "";
   state.showFavorites = false;
   state.highlightFilter = null;
+  state.openVerseActionsId = null;
   state.lastTextSelection = null;
   render();
 }
@@ -706,6 +708,7 @@ function setBook(bookId, chapter = 1) {
   els.searchInput.value = "";
   state.showFavorites = false;
   state.highlightFilter = null;
+  state.openVerseActionsId = null;
   state.lastTextSelection = null;
   render();
 }
@@ -715,6 +718,7 @@ function setChapter(chapter) {
   els.searchInput.value = "";
   state.showFavorites = false;
   state.highlightFilter = null;
+  state.openVerseActionsId = null;
   state.lastTextSelection = null;
   render();
 }
@@ -866,6 +870,11 @@ function applyReaderHighlight(color) {
 function editVerseNote(bookId, chapter, verse) {
   const id = bookmarkId(bookId, chapter, verse);
   state.editingNoteId = state.editingNoteId === id ? null : id;
+  renderVerses();
+}
+
+function toggleVerseActions(id) {
+  state.openVerseActionsId = state.openVerseActionsId === id ? null : id;
   renderVerses();
 }
 
@@ -1438,6 +1447,23 @@ function applyHighlight(row, id) {
 function createVerseActions({ bookId, chapter, verse, marked }) {
   const actions = document.createElement("div");
   actions.className = "verse-actions";
+  const id = bookmarkId(bookId, chapter, verse);
+  const isOpen = state.openVerseActionsId === id;
+
+  const more = document.createElement("button");
+  more.type = "button";
+  more.className = "verse-more-button";
+  more.textContent = "⋮";
+  more.title = "구절 메뉴";
+  more.setAttribute("aria-label", "구절 메뉴");
+  more.setAttribute("aria-expanded", String(isOpen));
+  more.addEventListener("click", () => toggleVerseActions(id));
+  actions.append(more);
+
+  if (!isOpen) return actions;
+
+  const menu = document.createElement("div");
+  menu.className = "verse-action-menu";
 
   const save = document.createElement("button");
   save.type = "button";
@@ -1447,12 +1473,16 @@ function createVerseActions({ bookId, chapter, verse, marked }) {
 
   const note = document.createElement("button");
   note.type = "button";
-  note.dataset.noteButton = bookmarkId(bookId, chapter, verse);
-  note.className = `verse-note-button${state.notes[bookmarkId(bookId, chapter, verse)] ? " has-note" : ""}`;
-  note.textContent = state.notes[bookmarkId(bookId, chapter, verse)] ? "메모됨" : "메모";
-  note.addEventListener("click", () => editVerseNote(bookId, chapter, verse));
+  note.dataset.noteButton = id;
+  note.className = `verse-note-button${state.notes[id] ? " has-note" : ""}`;
+  note.textContent = state.notes[id] ? "메모됨" : "메모";
+  note.addEventListener("click", () => {
+    state.openVerseActionsId = null;
+    editVerseNote(bookId, chapter, verse);
+  });
 
-  actions.append(save, note);
+  menu.append(save, note);
+  actions.append(menu);
   return actions;
 }
 
