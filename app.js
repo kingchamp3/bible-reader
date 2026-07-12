@@ -1918,7 +1918,7 @@ els.appMenuButtons.forEach((button) => {
     }
   });
 });
-els.selectionActionMenu.addEventListener("mousedown", (event) => event.preventDefault());
+els.selectionActionMenu.addEventListener("pointerdown", (event) => event.preventDefault());
 els.selectionActionMenu.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-selection-action]");
   if (!button) return;
