@@ -219,7 +219,8 @@ body.dark .sidebar {
 }
 
 body[data-active-section="devotional"] .reader-panel,
-body[data-active-section="gratitude"] .reader-panel {
+body[data-active-section="gratitude"] .reader-panel,
+body[data-active-section="today"] .reader-panel {
   max-width: 760px;
 }
 
@@ -743,6 +744,23 @@ textarea {
 .menu-panel.active {
   display: grid;
   gap: 16px;
+}
+
+.today-panel.active {
+  display: grid;
+  margin: 42px auto;
+  max-width: 520px;
+}
+
+.today-panel .daily-card {
+  gap: 8px;
+  padding: 14px;
+}
+
+.today-panel .daily-card button {
+  font-size: 15px;
+  min-height: 40px;
+  padding: 9px 10px;
 }
 
 .menu-panel-header {
@@ -1301,6 +1319,10 @@ body[data-bible-view="reader"] .sidebar {
   transform: translateX(-105%);
   width: min(380px, calc(100vw - 36px));
   z-index: 40;
+}
+
+body[data-bible-view="reader"][data-active-section="today"] .sidebar {
+  display: none;
 }
 
 body[data-sidebar-open="true"] .sidebar {
