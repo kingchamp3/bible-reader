@@ -143,6 +143,54 @@ select {
   color: var(--panel);
 }
 
+.home-book-picker {
+  border-top: 1px solid var(--line);
+  margin-top: 20px;
+  padding-top: 18px;
+}
+
+.home-book-picker-heading {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.home-book-picker-heading strong {
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.home-book-picker-heading button {
+  background: transparent;
+  border: 0;
+  color: var(--green);
+  font: inherit;
+  padding: 6px 0;
+}
+
+.home-book-list {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.home-book-list button {
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  font: inherit;
+  min-height: 46px;
+  padding: 10px;
+}
+
+.home-book-list button:hover,
+.home-book-list button:focus-visible {
+  border-color: var(--green);
+  color: var(--green);
+}
+
 body[data-bible-view="home"] .main-menu,
 body[data-bible-view="home"] .app-shell {
   display: none;
