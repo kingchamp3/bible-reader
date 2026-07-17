@@ -94,6 +94,7 @@ const state = {
   lastTextSelection: null,
   gratitudeNotes: [],
   gratitudeStatus: "",
+  homeTestament: null,
 };
 
 const recommendedDailyVerseRefs = [
@@ -159,6 +160,10 @@ const els = {
   sidebar: document.querySelector(".sidebar"),
   homeOldTestament: document.querySelector("#homeOldTestament"),
   homeNewTestament: document.querySelector("#homeNewTestament"),
+  homeBookPicker: document.querySelector("#homeBookPicker"),
+  homeBookPickerTitle: document.querySelector("#homeBookPickerTitle"),
+  homeBookPickerBack: document.querySelector("#homeBookPickerBack"),
+  homeBookList: document.querySelector("#homeBookList"),
   homeGoogleLoginButton: document.querySelector("#homeGoogleLoginButton"),
   homeGoogleSignupButton: document.querySelector("#homeGoogleSignupButton"),
   homeAuthStatus: document.querySelector("#homeAuthStatus"),
@@ -720,25 +725,59 @@ function setChapter(chapter) {
   render();
 }
 
-function openTestament(testament) {
-  const firstBook = selectedTranslation().books.find((book) => book.testament === testament);
-  if (!firstBook) return;
+function renderHomeBookPicker() {
+  const testament = state.homeTestament;
+  els.homeBookPicker.hidden = !testament;
+  els.homeBookList.replaceChildren();
+  if (!testament) return;
 
+  const testamentName = testament === "old" ? "구약성서" : "신약성서";
+  els.homeBookPickerTitle.textContent = `${testamentName} 성경책 선택`;
+  const fragment = document.createDocumentFragment();
+  selectedTranslation().books
+    .filter((book) => book.testament === testament)
+    .forEach((book) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.homeBookId = book.id;
+      button.textContent = book.name;
+      fragment.append(button);
+    });
+  els.homeBookList.append(fragment);
+}
+
+function chooseHomeTestament(testament) {
+  state.homeTestament = testament;
+  renderHomeBookPicker();
+  els.homeBookPicker.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function openHomeBook(bookId) {
   document.body.dataset.bibleView = "reader";
   setSidebarOpen(false);
   showAppSection("bible");
-  setBook(firstBook.id);
+  setBook(bookId);
 }
 
 function showBibleHome() {
   setSidebarOpen(false);
+  state.homeTestament = null;
+  renderHomeBookPicker();
   document.body.dataset.bibleView = "home";
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 els.homeButton?.addEventListener("click", showBibleHome);
-els.homeOldTestament?.addEventListener("click", () => openTestament("old"));
-els.homeNewTestament?.addEventListener("click", () => openTestament("new"));
+els.homeOldTestament?.addEventListener("click", () => chooseHomeTestament("old"));
+els.homeNewTestament?.addEventListener("click", () => chooseHomeTestament("new"));
+els.homeBookPickerBack?.addEventListener("click", () => {
+  state.homeTestament = null;
+  renderHomeBookPicker();
+});
+els.homeBookList?.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-home-book-id]");
+  if (button) openHomeBook(button.dataset.homeBookId);
+});
 els.homeGoogleLoginButton?.addEventListener("click", loginWithGoogle);
 els.homeGoogleSignupButton?.addEventListener("click", loginWithGoogle);
 
@@ -1770,6 +1809,7 @@ function renderVerses() {
 }
 
 function render() {
+  renderHomeBookPicker();
   renderMemberPanel();
   renderTranslationSelect();
   renderCompareTranslationSelect();
