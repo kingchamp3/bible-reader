@@ -856,11 +856,22 @@ textarea {
   padding: 10px;
 }
 
-.chapter-navigation-top {
+.reader-passage-navigation {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
   margin-bottom: 12px;
+  padding: 10px;
   position: sticky;
   top: 0;
   z-index: 12;
+}
+
+.chapter-navigation-top {
+  background: transparent;
+  border: 0;
+  margin-top: 8px;
+  padding: 0;
 }
 
 .chapter-navigation-bottom {
@@ -869,7 +880,8 @@ textarea {
 }
 
 .chapter-navigation button,
-.reader-chapter-select select {
+.reader-chapter-select select,
+.reader-book-select select {
   background: var(--panel-soft);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -885,7 +897,8 @@ textarea {
 
 .chapter-navigation button:hover:not(:disabled),
 .chapter-navigation button:focus-visible,
-.reader-chapter-select select:focus-visible {
+.reader-chapter-select select:focus-visible,
+.reader-book-select select:focus-visible {
   border-color: var(--green);
   color: var(--green);
   outline: 2px solid var(--green-soft);
@@ -902,7 +915,18 @@ textarea {
   gap: 3px;
 }
 
-.reader-chapter-select span {
+.reader-book-select {
+  display: grid;
+  gap: 4px;
+}
+
+.reader-book-select select {
+  padding: 0 12px;
+  width: 100%;
+}
+
+.reader-chapter-select span,
+.reader-book-select span {
   color: var(--muted);
   font-size: 11px;
   font-weight: 800;
@@ -1390,6 +1414,10 @@ textarea {
   .reader-chapter-select select {
     font-size: 14px;
     padding-left: 9px;
+  }
+
+  .reader-book-select select {
+    font-size: 15px;
   }
 
   .verse-row {
