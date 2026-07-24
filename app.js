@@ -201,6 +201,8 @@ const els = {
   biblePath: document.querySelector("#biblePath"),
   bookList: document.querySelector("#bookList"),
   chapterList: document.querySelector("#chapterList"),
+  readerChapterSelect: document.querySelector("#readerChapterSelect"),
+  chapterDirectionButtons: document.querySelectorAll("[data-chapter-direction]"),
   oldTab: document.querySelector("#oldTab"),
   newTab: document.querySelector("#newTab"),
   verseList: document.querySelector("#verseList"),
@@ -723,6 +725,62 @@ function setChapter(chapter) {
   state.highlightFilter = null;
   state.lastTextSelection = null;
   render();
+}
+
+function chapterLocations() {
+  return selectedTranslation().books.flatMap((book) =>
+    book.chapters.map((chapter) => ({
+      bookId: book.id,
+      bookName: book.name,
+      chapter: chapter.chapter,
+    })),
+  );
+}
+
+function adjacentChapterLocation(direction) {
+  const locations = chapterLocations();
+  const currentIndex = locations.findIndex(
+    (location) => location.bookId === state.selectedBookId && location.chapter === state.selectedChapter,
+  );
+  if (currentIndex < 0) return null;
+  return locations[currentIndex + (direction === "previous" ? -1 : 1)] || null;
+}
+
+function scrollReaderToTop() {
+  requestAnimationFrame(() => {
+    els.bibleReader.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
+function openChapterLocation(location) {
+  if (!location) return;
+  setBook(location.bookId, location.chapter);
+  scrollReaderToTop();
+}
+
+function renderChapterNavigation() {
+  const book = selectedBook();
+  els.readerChapterSelect.replaceChildren(
+    ...book.chapters.map((chapter) => {
+      const option = document.createElement("option");
+      option.value = chapter.chapter;
+      option.textContent = `${chapter.chapter}장`;
+      return option;
+    }),
+  );
+  els.readerChapterSelect.value = String(state.selectedChapter);
+
+  els.chapterDirectionButtons.forEach((button) => {
+    const direction = button.dataset.chapterDirection;
+    const target = adjacentChapterLocation(direction);
+    const directionLabel = direction === "previous" ? "이전 장" : "다음 장";
+    button.disabled = !target;
+    button.title = target ? `${target.bookName} ${target.chapter}장` : `${directionLabel}이 없습니다`;
+    button.setAttribute(
+      "aria-label",
+      target ? `${directionLabel}: ${target.bookName} ${target.chapter}장` : `${directionLabel}이 없습니다`,
+    );
+  });
 }
 
 function renderHomeBookPicker() {
@@ -1817,6 +1875,7 @@ function render() {
   renderTabs();
   renderBookButtons();
   renderChapterButtons();
+  renderChapterNavigation();
   renderSourceAttribution();
   renderDailyVerse();
   renderGratitudePanel();
@@ -1882,6 +1941,15 @@ els.chapterList.addEventListener("click", (event) => {
       els.bibleReader.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }
+});
+els.readerChapterSelect.addEventListener("change", (event) => {
+  setChapter(event.target.value);
+  scrollReaderToTop();
+});
+els.chapterDirectionButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    openChapterLocation(adjacentChapterLocation(button.dataset.chapterDirection));
+  });
 });
 els.readingPlan.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-plan-chapter]");

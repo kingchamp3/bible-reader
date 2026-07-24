@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>성경을 읽다 - 성경 번역본</title>
-    <link rel="stylesheet" href="./styles.css?v=today-menu-v1" />
+    <link rel="stylesheet" href="./styles.css?v=chapter-navigation-v1" />
   </head>
   <body data-bible-view="home">
     <section class="bible-home" aria-label="성경 선택">
@@ -155,6 +155,15 @@
             </div>
           </header>
 
+          <nav class="chapter-navigation chapter-navigation-top" aria-label="장 이동">
+            <button type="button" data-chapter-direction="previous">‹ 이전 장</button>
+            <label class="reader-chapter-select">
+              <span>장 선택</span>
+              <select id="readerChapterSelect" aria-label="장 선택"></select>
+            </label>
+            <button type="button" data-chapter-direction="next">다음 장 ›</button>
+          </nav>
+
           <section class="reader-highlighter" aria-label="형광펜">
             <span>형광펜</span>
             <div id="readerHighlightPalette" class="reader-highlight-palette">
@@ -168,6 +177,10 @@
 
           <section id="resultSummary" class="result-summary" hidden></section>
           <article id="verseList" class="verse-list" aria-live="polite"></article>
+          <nav class="chapter-navigation chapter-navigation-bottom" aria-label="본문 아래 장 이동">
+            <button type="button" data-chapter-direction="previous">‹ 이전 장</button>
+            <button type="button" data-chapter-direction="next">다음 장 ›</button>
+          </nav>
         </section>
 
         <section class="content-section today-panel" data-content-section="today" aria-label="오늘의 말씀">
@@ -240,6 +253,6 @@
     <script src="./bibles-data.js?v=today-menu-v1"></script>
     <script src="./sblgnt-loader.js?v=today-menu-v1"></script>
     <script src="./wlc-loader.js?v=today-menu-v1"></script>
-    <script type="module" src="./app.js?v=today-menu-v1"></script>
+    <script type="module" src="./app.js?v=chapter-navigation-v1"></script>
   </body>
 </html>
