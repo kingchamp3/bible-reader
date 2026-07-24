@@ -201,6 +201,7 @@ const els = {
   biblePath: document.querySelector("#biblePath"),
   bookList: document.querySelector("#bookList"),
   chapterList: document.querySelector("#chapterList"),
+  readerBookSelect: document.querySelector("#readerBookSelect"),
   readerChapterSelect: document.querySelector("#readerChapterSelect"),
   chapterDirectionButtons: document.querySelectorAll("[data-chapter-direction]"),
   oldTab: document.querySelector("#oldTab"),
@@ -759,7 +760,32 @@ function openChapterLocation(location) {
 }
 
 function renderChapterNavigation() {
+  const translation = selectedTranslation();
   const book = selectedBook();
+  const bookGroups = [
+    { testament: "old", label: "구약성서" },
+    { testament: "new", label: "신약성서" },
+  ]
+    .map(({ testament, label }) => {
+      const books = translation.books.filter((item) => item.testament === testament);
+      if (!books.length) return null;
+
+      const group = document.createElement("optgroup");
+      group.label = label;
+      group.append(
+        ...books.map((item) => {
+          const option = document.createElement("option");
+          option.value = item.id;
+          option.textContent = item.name;
+          return option;
+        }),
+      );
+      return group;
+    })
+    .filter(Boolean);
+
+  els.readerBookSelect.replaceChildren(...bookGroups);
+  els.readerBookSelect.value = book.id;
   els.readerChapterSelect.replaceChildren(
     ...book.chapters.map((chapter) => {
       const option = document.createElement("option");
@@ -1945,6 +1971,9 @@ els.chapterList.addEventListener("click", (event) => {
 els.readerChapterSelect.addEventListener("change", (event) => {
   setChapter(event.target.value);
   scrollReaderToTop();
+});
+els.readerBookSelect.addEventListener("change", (event) => {
+  openChapterLocation({ bookId: event.target.value, chapter: 1 });
 });
 els.chapterDirectionButtons.forEach((button) => {
   button.addEventListener("click", () => {
