@@ -202,7 +202,6 @@ const els = {
   bookList: document.querySelector("#bookList"),
   chapterList: document.querySelector("#chapterList"),
   readerBookSelect: document.querySelector("#readerBookSelect"),
-  readerChapterSelect: document.querySelector("#readerChapterSelect"),
   chapterDirectionButtons: document.querySelectorAll("[data-chapter-direction]"),
   oldTab: document.querySelector("#oldTab"),
   newTab: document.querySelector("#newTab"),
@@ -786,15 +785,6 @@ function renderChapterNavigation() {
 
   els.readerBookSelect.replaceChildren(...bookGroups);
   els.readerBookSelect.value = book.id;
-  els.readerChapterSelect.replaceChildren(
-    ...book.chapters.map((chapter) => {
-      const option = document.createElement("option");
-      option.value = chapter.chapter;
-      option.textContent = `${chapter.chapter}장`;
-      return option;
-    }),
-  );
-  els.readerChapterSelect.value = String(state.selectedChapter);
 
   els.chapterDirectionButtons.forEach((button) => {
     const direction = button.dataset.chapterDirection;
@@ -1967,10 +1957,6 @@ els.chapterList.addEventListener("click", (event) => {
       els.bibleReader.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   }
-});
-els.readerChapterSelect.addEventListener("change", (event) => {
-  setChapter(event.target.value);
-  scrollReaderToTop();
 });
 els.readerBookSelect.addEventListener("change", (event) => {
   openChapterLocation({ bookId: event.target.value, chapter: 1 });

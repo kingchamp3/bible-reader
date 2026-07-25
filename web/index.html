@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>성경을 읽다 - 성경 번역본</title>
-    <link rel="stylesheet" href="./styles.css?v=book-chapter-dropdown-v1" />
+    <link rel="stylesheet" href="./styles.css?v=chapter-select-removed-v1" />
   </head>
   <body data-bible-view="home">
     <section class="bible-home" aria-label="성경 선택">
@@ -162,10 +162,6 @@
             </label>
             <nav class="chapter-navigation chapter-navigation-top" aria-label="장 이동">
               <button type="button" data-chapter-direction="previous">‹ 이전 장</button>
-              <label class="reader-chapter-select">
-                <span>장 선택</span>
-                <select id="readerChapterSelect" aria-label="장 선택"></select>
-              </label>
               <button type="button" data-chapter-direction="next">다음 장 ›</button>
             </nav>
           </section>
@@ -259,6 +255,6 @@
     <script src="./bibles-data.js?v=today-menu-v1"></script>
     <script src="./sblgnt-loader.js?v=today-menu-v1"></script>
     <script src="./wlc-loader.js?v=today-menu-v1"></script>
-    <script type="module" src="./app.js?v=book-chapter-dropdown-v1"></script>
+    <script type="module" src="./app.js?v=chapter-select-removed-v1"></script>
   </body>
 </html>
