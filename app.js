@@ -96,6 +96,7 @@ const state = {
   gratitudeStatus: "",
   homeTestament: null,
 };
+let renderedReaderBookKey = "";
 
 const recommendedDailyVerseRefs = [
   ["john", 3, 16],
@@ -201,7 +202,7 @@ const els = {
   biblePath: document.querySelector("#biblePath"),
   bookList: document.querySelector("#bookList"),
   chapterList: document.querySelector("#chapterList"),
-  readerBookSelect: document.querySelector("#readerBookSelect"),
+  readerBookList: document.querySelector("#readerBookList"),
   chapterDirectionButtons: document.querySelectorAll("[data-chapter-direction]"),
   oldTab: document.querySelector("#oldTab"),
   newTab: document.querySelector("#newTab"),
@@ -761,30 +762,45 @@ function openChapterLocation(location) {
 function renderChapterNavigation() {
   const translation = selectedTranslation();
   const book = selectedBook();
-  const bookGroups = [
-    { testament: "old", label: "구약성서" },
-    { testament: "new", label: "신약성서" },
-  ]
-    .map(({ testament, label }) => {
-      const books = translation.books.filter((item) => item.testament === testament);
-      if (!books.length) return null;
+  const previousScrollLeft = els.readerBookList.scrollLeft;
+  const nextReaderBookKey = `${translation.id}:${book.id}`;
+  const shouldCenterSelectedBook = renderedReaderBookKey !== nextReaderBookKey;
+  const fragment = document.createDocumentFragment();
+  let currentTestament = null;
 
-      const group = document.createElement("optgroup");
-      group.label = label;
-      group.append(
-        ...books.map((item) => {
-          const option = document.createElement("option");
-          option.value = item.id;
-          option.textContent = item.name;
-          return option;
-        }),
+  translation.books.forEach((item) => {
+    if (item.testament !== currentTestament) {
+      currentTestament = item.testament;
+      const testament = document.createElement("span");
+      testament.className = "reader-book-testament";
+      testament.textContent = item.testament === "old" ? "구약" : "신약";
+      fragment.append(testament);
+    }
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.readerBookId = item.id;
+    button.textContent = item.name;
+    button.title = `${item.name} 1장으로 이동`;
+    button.classList.toggle("active", item.id === book.id);
+    button.setAttribute("aria-pressed", String(item.id === book.id));
+    fragment.append(button);
+  });
+
+  els.readerBookList.replaceChildren(fragment);
+  renderedReaderBookKey = nextReaderBookKey;
+  if (shouldCenterSelectedBook) {
+    requestAnimationFrame(() => {
+      const selectedButton = els.readerBookList.querySelector("button.active");
+      if (!selectedButton) return;
+      els.readerBookList.scrollLeft = Math.max(
+        0,
+        selectedButton.offsetLeft - (els.readerBookList.clientWidth - selectedButton.offsetWidth) / 2,
       );
-      return group;
-    })
-    .filter(Boolean);
-
-  els.readerBookSelect.replaceChildren(...bookGroups);
-  els.readerBookSelect.value = book.id;
+    });
+  } else {
+    els.readerBookList.scrollLeft = previousScrollLeft;
+  }
 
   els.chapterDirectionButtons.forEach((button) => {
     const direction = button.dataset.chapterDirection;
@@ -1958,8 +1974,11 @@ els.chapterList.addEventListener("click", (event) => {
     });
   }
 });
-els.readerBookSelect.addEventListener("change", (event) => {
-  openChapterLocation({ bookId: event.target.value, chapter: 1 });
+els.readerBookList.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-reader-book-id]");
+  if (button) {
+    openChapterLocation({ bookId: button.dataset.readerBookId, chapter: 1 });
+  }
 });
 els.chapterDirectionButtons.forEach((button) => {
   button.addEventListener("click", () => {

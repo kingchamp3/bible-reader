@@ -880,7 +880,7 @@ textarea {
 }
 
 .chapter-navigation button,
-.reader-book-select select {
+.reader-book-list button {
   background: var(--panel-soft);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -896,7 +896,8 @@ textarea {
 
 .chapter-navigation button:hover:not(:disabled),
 .chapter-navigation button:focus-visible,
-.reader-book-select select:focus-visible {
+.reader-book-list button:hover,
+.reader-book-list button:focus-visible {
   border-color: var(--green);
   color: var(--green);
   outline: 2px solid var(--green-soft);
@@ -908,22 +909,67 @@ textarea {
   opacity: 0.4;
 }
 
-.reader-book-select {
+.reader-book-navigation {
   display: grid;
   gap: 4px;
+  min-width: 0;
 }
 
-.reader-book-select select {
-  padding: 0 12px;
-  width: 100%;
-}
-
-.reader-book-select span {
+.reader-book-navigation > span {
   color: var(--muted);
   font-size: 11px;
   font-weight: 800;
   line-height: 1;
   padding-left: 4px;
+}
+
+.reader-book-list {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 2px 1px 8px;
+  scrollbar-color: var(--green) var(--panel-soft);
+  scrollbar-width: thin;
+  scroll-snap-type: x proximity;
+}
+
+.reader-book-list::-webkit-scrollbar {
+  height: 6px;
+}
+
+.reader-book-list::-webkit-scrollbar-track {
+  background: var(--panel-soft);
+}
+
+.reader-book-list::-webkit-scrollbar-thumb {
+  background: var(--green);
+  border-radius: 8px;
+}
+
+.reader-book-list button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 0 12px;
+  scroll-snap-align: center;
+  white-space: nowrap;
+}
+
+.reader-book-list button.active {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.reader-book-testament {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 0 4px;
 }
 
 .bookmark-count {
@@ -1397,8 +1443,13 @@ textarea {
     padding: 0 5px;
   }
 
-  .reader-book-select select {
-    font-size: 15px;
+  .reader-book-list {
+    gap: 5px;
+  }
+
+  .reader-book-list button {
+    font-size: 13px;
+    padding: 0 10px;
   }
 
   .verse-row {
