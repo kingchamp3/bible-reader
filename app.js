@@ -96,7 +96,7 @@ const state = {
   gratitudeStatus: "",
   homeTestament: null,
 };
-let renderedReaderBookKey = "";
+let renderedReaderChapterKey = "";
 
 const recommendedDailyVerseRefs = [
   ["john", 3, 16],
@@ -202,7 +202,8 @@ const els = {
   biblePath: document.querySelector("#biblePath"),
   bookList: document.querySelector("#bookList"),
   chapterList: document.querySelector("#chapterList"),
-  readerBookList: document.querySelector("#readerBookList"),
+  readerBookName: document.querySelector("#readerBookName"),
+  readerChapterList: document.querySelector("#readerChapterList"),
   chapterDirectionButtons: document.querySelectorAll("[data-chapter-direction]"),
   oldTab: document.querySelector("#oldTab"),
   newTab: document.querySelector("#newTab"),
@@ -762,44 +763,36 @@ function openChapterLocation(location) {
 function renderChapterNavigation() {
   const translation = selectedTranslation();
   const book = selectedBook();
-  const previousScrollLeft = els.readerBookList.scrollLeft;
-  const nextReaderBookKey = `${translation.id}:${book.id}`;
-  const shouldCenterSelectedBook = renderedReaderBookKey !== nextReaderBookKey;
+  const previousScrollLeft = els.readerChapterList.scrollLeft;
+  const nextReaderChapterKey = `${translation.id}:${book.id}:${state.selectedChapter}`;
+  const shouldCenterSelectedChapter = renderedReaderChapterKey !== nextReaderChapterKey;
   const fragment = document.createDocumentFragment();
-  let currentTestament = null;
 
-  translation.books.forEach((item) => {
-    if (item.testament !== currentTestament) {
-      currentTestament = item.testament;
-      const testament = document.createElement("span");
-      testament.className = "reader-book-testament";
-      testament.textContent = item.testament === "old" ? "구약" : "신약";
-      fragment.append(testament);
-    }
-
+  book.chapters.forEach((item) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.dataset.readerBookId = item.id;
-    button.textContent = item.name;
-    button.title = `${item.name} 1장으로 이동`;
-    button.classList.toggle("active", item.id === book.id);
-    button.setAttribute("aria-pressed", String(item.id === book.id));
+    button.dataset.readerChapter = item.chapter;
+    button.textContent = `${item.chapter}장`;
+    button.title = `${book.name} ${item.chapter}장으로 이동`;
+    button.classList.toggle("active", item.chapter === state.selectedChapter);
+    button.setAttribute("aria-pressed", String(item.chapter === state.selectedChapter));
     fragment.append(button);
   });
 
-  els.readerBookList.replaceChildren(fragment);
-  renderedReaderBookKey = nextReaderBookKey;
-  if (shouldCenterSelectedBook) {
+  els.readerBookName.textContent = book.name;
+  els.readerChapterList.replaceChildren(fragment);
+  renderedReaderChapterKey = nextReaderChapterKey;
+  if (shouldCenterSelectedChapter) {
     requestAnimationFrame(() => {
-      const selectedButton = els.readerBookList.querySelector("button.active");
+      const selectedButton = els.readerChapterList.querySelector("button.active");
       if (!selectedButton) return;
-      els.readerBookList.scrollLeft = Math.max(
+      els.readerChapterList.scrollLeft = Math.max(
         0,
-        selectedButton.offsetLeft - (els.readerBookList.clientWidth - selectedButton.offsetWidth) / 2,
+        selectedButton.offsetLeft - (els.readerChapterList.clientWidth - selectedButton.offsetWidth) / 2,
       );
     });
   } else {
-    els.readerBookList.scrollLeft = previousScrollLeft;
+    els.readerChapterList.scrollLeft = previousScrollLeft;
   }
 
   els.chapterDirectionButtons.forEach((button) => {
@@ -1974,10 +1967,11 @@ els.chapterList.addEventListener("click", (event) => {
     });
   }
 });
-els.readerBookList.addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-reader-book-id]");
+els.readerChapterList.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-reader-chapter]");
   if (button) {
-    openChapterLocation({ bookId: button.dataset.readerBookId, chapter: 1 });
+    setChapter(button.dataset.readerChapter);
+    scrollReaderToTop();
   }
 });
 els.chapterDirectionButtons.forEach((button) => {

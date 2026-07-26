@@ -880,7 +880,7 @@ textarea {
 }
 
 .chapter-navigation button,
-.reader-book-list button {
+.reader-chapter-list button {
   background: var(--panel-soft);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -896,8 +896,8 @@ textarea {
 
 .chapter-navigation button:hover:not(:disabled),
 .chapter-navigation button:focus-visible,
-.reader-book-list button:hover,
-.reader-book-list button:focus-visible {
+.reader-chapter-list button:hover,
+.reader-chapter-list button:focus-visible {
   border-color: var(--green);
   color: var(--green);
   outline: 2px solid var(--green-soft);
@@ -909,21 +909,28 @@ textarea {
   opacity: 0.4;
 }
 
-.reader-book-navigation {
+.reader-chapter-strip-navigation {
+  align-items: stretch;
   display: grid;
-  gap: 4px;
+  gap: 8px;
+  grid-template-columns: minmax(104px, 160px) minmax(0, 1fr);
   min-width: 0;
 }
 
-.reader-book-navigation > span {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1;
-  padding-left: 4px;
+.reader-current-book {
+  align-items: center;
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  font-size: 15px;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 12px;
+  text-align: center;
 }
 
-.reader-book-list {
+.reader-chapter-list {
   display: flex;
   gap: 6px;
   min-width: 0;
@@ -935,20 +942,20 @@ textarea {
   scroll-snap-type: x proximity;
 }
 
-.reader-book-list::-webkit-scrollbar {
+.reader-chapter-list::-webkit-scrollbar {
   height: 6px;
 }
 
-.reader-book-list::-webkit-scrollbar-track {
+.reader-chapter-list::-webkit-scrollbar-track {
   background: var(--panel-soft);
 }
 
-.reader-book-list::-webkit-scrollbar-thumb {
+.reader-chapter-list::-webkit-scrollbar-thumb {
   background: var(--green);
   border-radius: 8px;
 }
 
-.reader-book-list button {
+.reader-chapter-list button {
   flex: 0 0 auto;
   min-height: 42px;
   padding: 0 12px;
@@ -956,20 +963,10 @@ textarea {
   white-space: nowrap;
 }
 
-.reader-book-list button.active {
+.reader-chapter-list button.active {
   background: var(--green);
   border-color: var(--green);
   color: #fff;
-}
-
-.reader-book-testament {
-  align-items: center;
-  color: var(--muted);
-  display: flex;
-  flex: 0 0 auto;
-  font-size: 11px;
-  font-weight: 900;
-  padding: 0 4px;
 }
 
 .bookmark-count {
@@ -1443,11 +1440,20 @@ textarea {
     padding: 0 5px;
   }
 
-  .reader-book-list {
+  .reader-chapter-strip-navigation {
+    grid-template-columns: minmax(84px, 128px) minmax(0, 1fr);
+  }
+
+  .reader-current-book {
+    font-size: 13px;
+    padding: 0 9px;
+  }
+
+  .reader-chapter-list {
     gap: 5px;
   }
 
-  .reader-book-list button {
+  .reader-chapter-list button {
     font-size: 13px;
     padding: 0 10px;
   }
