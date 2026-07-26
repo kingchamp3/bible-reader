@@ -156,6 +156,7 @@ const els = {
   contentSections: document.querySelectorAll("[data-content-section]"),
   homeButton: document.querySelector("#homeButton"),
   toolsMenuButton: document.querySelector("#toolsMenuButton"),
+  readerBookMenuButton: document.querySelector("#readerBookMenuButton"),
   closeSidebarButton: document.querySelector("#closeSidebarButton"),
   sidebarBackdrop: document.querySelector("#sidebarBackdrop"),
   sidebar: document.querySelector(".sidebar"),
@@ -236,6 +237,7 @@ function showAppSection(sectionId) {
 function setSidebarOpen(open) {
   document.body.dataset.sidebarOpen = open ? "true" : "false";
   els.toolsMenuButton?.setAttribute("aria-expanded", String(open));
+  els.readerBookMenuButton?.setAttribute("aria-expanded", String(open));
 }
 
 function selectedTranslation() {
@@ -2076,6 +2078,10 @@ els.toolsMenuButton?.addEventListener("click", () => {
   const opening = document.body.dataset.sidebarOpen !== "true";
   setSidebarOpen(opening);
   if (opening) requestAnimationFrame(() => els.sidebar.scrollTo({ top: 0, behavior: "auto" }));
+});
+els.readerBookMenuButton?.addEventListener("click", () => {
+  setSidebarOpen(true);
+  requestAnimationFrame(() => els.sidebar.scrollTo({ top: 0, behavior: "auto" }));
 });
 els.closeSidebarButton?.addEventListener("click", () => setSidebarOpen(false));
 els.sidebarBackdrop?.addEventListener("click", () => setSidebarOpen(false));
