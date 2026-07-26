@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>성경을 읽다 - 성경 번역본</title>
-    <link rel="stylesheet" href="./styles.css?v=book-strip-v1" />
+    <link rel="stylesheet" href="./styles.css?v=book-chapter-strip-v1" />
   </head>
   <body data-bible-view="home">
     <section class="bible-home" aria-label="성경 선택">
@@ -156,9 +156,9 @@
           </header>
 
           <section class="reader-passage-navigation" aria-label="성경책과 장 이동">
-            <nav class="reader-book-navigation" aria-label="성경책 선택">
-              <span>성경책</span>
-              <div id="readerBookList" class="reader-book-list"></div>
+            <nav class="reader-chapter-strip-navigation" aria-label="현재 성경책의 장 선택">
+              <strong id="readerBookName" class="reader-current-book">창세기</strong>
+              <div id="readerChapterList" class="reader-chapter-list"></div>
             </nav>
             <nav class="chapter-navigation chapter-navigation-top" aria-label="장 이동">
               <button type="button" data-chapter-direction="previous">‹ 이전 장</button>
@@ -255,6 +255,6 @@
     <script src="./bibles-data.js?v=today-menu-v1"></script>
     <script src="./sblgnt-loader.js?v=today-menu-v1"></script>
     <script src="./wlc-loader.js?v=today-menu-v1"></script>
-    <script type="module" src="./app.js?v=book-strip-v1"></script>
+    <script type="module" src="./app.js?v=book-chapter-strip-v1"></script>
   </body>
 </html>
