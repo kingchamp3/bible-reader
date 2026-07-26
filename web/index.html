@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>성경을 읽다 - 성경 번역본</title>
-    <link rel="stylesheet" href="./styles.css?v=book-chapter-strip-v1" />
+    <link rel="stylesheet" href="./styles.css?v=reader-layout-v1" />
   </head>
   <body data-bible-view="home">
     <section class="bible-home" aria-label="성경 선택">
@@ -32,6 +32,7 @@
     </section>
 
     <nav class="main-menu" aria-label="주요 메뉴">
+      <strong class="main-menu-brand">성경을 읽다</strong>
       <button id="homeButton" type="button">처음</button>
       <button class="active" type="button" data-app-section="bible">성경</button>
       <button type="button" data-app-section="today">오늘</button>
@@ -71,16 +72,6 @@
             <button id="chapterReadToggle" type="button">현재 장 체크</button>
           </div>
         </section>
-
-        <label class="search-box">
-          <span>전체 검색</span>
-          <input id="searchInput" type="search" placeholder="예: 사랑, 믿음, 창조" autocomplete="off" />
-        </label>
-
-        <label class="search-box">
-          <span>번역본</span>
-          <select id="translationSelect"></select>
-        </label>
 
         <label class="search-box">
           <span>대조 번역 1</span>
@@ -144,6 +135,25 @@
 
       <section class="reader-panel">
         <section class="content-section active" data-content-section="bible">
+          <section class="reader-utility-bar" aria-label="성경 읽기 도구">
+            <label class="reader-translation-control">
+              <span>번역본</span>
+              <select id="translationSelect"></select>
+            </label>
+            <label class="reader-search-control">
+              <span>성경 검색</span>
+              <input id="searchInput" type="search" placeholder="구절, 단어 검색" autocomplete="off" />
+            </label>
+            <button
+              id="readerBookMenuButton"
+              type="button"
+              aria-controls="appSidebar"
+              aria-expanded="false"
+            >
+              책/장 선택
+            </button>
+          </section>
+
           <header class="reader-header">
             <div>
               <p id="readerMeta" class="reader-meta">개역한글</p>
@@ -255,6 +265,6 @@
     <script src="./bibles-data.js?v=today-menu-v1"></script>
     <script src="./sblgnt-loader.js?v=today-menu-v1"></script>
     <script src="./wlc-loader.js?v=today-menu-v1"></script>
-    <script type="module" src="./app.js?v=book-chapter-strip-v1"></script>
+    <script type="module" src="./app.js?v=reader-layout-v1"></script>
   </body>
 </html>
