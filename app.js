@@ -346,6 +346,21 @@ function selectedBook() {
   return translation.books.find((book) => book.id === state.selectedBookId) || translation.books[0];
 }
 
+function translationForTestament(testament) {
+  const current = selectedTranslation();
+  if (current.books.some((book) => book.testament === testament)) return current;
+
+  return (
+    bibleBundle.translations.find(
+      (translation) =>
+        translation.id === bibleBundle.defaultTranslationId &&
+        translation.books.some((book) => book.testament === testament),
+    ) ||
+    bibleBundle.translations.find((translation) => translation.books.some((book) => book.testament === testament)) ||
+    current
+  );
+}
+
 function selectedChapter() {
   const book = selectedBook();
   return book.chapters.find((chapter) => chapter.chapter === state.selectedChapter) || book.chapters[0];
@@ -576,9 +591,8 @@ function highlightedVerses(color) {
     .filter(Boolean);
 }
 
-function dailyVerse() {
-  const translation = selectedTranslation();
-  const recommendedVerses = recommendedDailyVerseRefs
+function recommendedDailyVerses(translation) {
+  return recommendedDailyVerseRefs
     .map(([bookId, chapterNumber, verseNumber]) => {
       const book = translation.books.find((item) => item.id === bookId);
       const chapter = book?.chapters.find((item) => item.chapter === chapterNumber);
@@ -592,10 +606,31 @@ function dailyVerse() {
       };
     })
     .filter(Boolean);
-  const verses = recommendedVerses.length ? recommendedVerses : allVerses().filter((verse) => {
-    const book = translation.books.find((item) => item.id === verse.bookId);
-    return book?.testament === "new";
-  });
+}
+
+function dailyVerse() {
+  const selected = selectedTranslation();
+  const fallback =
+    bibleBundle.translations.find((translation) => translation.id === bibleBundle.defaultTranslationId) || selected;
+  let verses = recommendedDailyVerses(selected);
+  if (!verses.length && fallback.id !== selected.id) {
+    verses = recommendedDailyVerses(fallback);
+  }
+  if (!verses.length) {
+    verses = fallback.books
+      .filter((book) => book.testament === "new")
+      .flatMap((book) =>
+        book.chapters.flatMap((chapter) =>
+          chapter.verses.map((verse) => ({
+            ...verse,
+            bookId: book.id,
+            bookName: book.name,
+            chapter: chapter.chapter,
+          })),
+        ),
+      );
+  }
+  if (!verses.length) return null;
   const today = new Date();
   const seed = Number(
     `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(today.getDate()).padStart(2, "0")}`,
@@ -829,9 +864,10 @@ function renderHomeBookPicker() {
   if (!testament) return;
 
   const testamentName = testament === "old" ? "구약성서" : "신약성서";
+  const translation = translationForTestament(testament);
   els.homeBookPickerTitle.textContent = `${testamentName} 성경책 선택`;
   const fragment = document.createDocumentFragment();
-  selectedTranslation().books
+  translation.books
     .filter((book) => book.testament === testament)
     .forEach((book) => {
       const button = document.createElement("button");
@@ -858,7 +894,11 @@ function chooseHomeTestament(testament) {
   els.homeBookPicker.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function openHomeBook(bookId) {
+async function openHomeBook(bookId) {
+  const translation = translationForTestament(state.homeTestament);
+  if (translation.id !== state.selectedTranslationId) {
+    await setTranslation(translation.id);
+  }
   document.body.dataset.bibleView = "reader";
   setSidebarOpen(false);
   showAppSection("bible");
@@ -880,9 +920,9 @@ els.homeBookPickerBack?.addEventListener("click", () => {
   state.homeTestament = null;
   renderHomeBookPicker();
 });
-els.homeBookList?.addEventListener("click", (event) => {
+els.homeBookList?.addEventListener("click", async (event) => {
   const button = event.target.closest("button[data-home-book-id]");
-  if (button) openHomeBook(button.dataset.homeBookId);
+  if (button) await openHomeBook(button.dataset.homeBookId);
 });
 els.homeGoogleLoginButton?.addEventListener("click", loginWithGoogle);
 els.homeGoogleSignupButton?.addEventListener("click", loginWithGoogle);
@@ -1104,6 +1144,11 @@ function renderProgress() {
 
 function renderDailyVerse() {
   const verse = dailyVerse();
+  if (!verse) {
+    els.dailyVerseButton.textContent = "오늘의 말씀을 준비하지 못했습니다.";
+    els.dailyVerseButton.onclick = null;
+    return;
+  }
   els.dailyVerseButton.textContent = `${verse.bookName} ${verse.chapter}:${verse.verse} ${verse.text}`;
   els.dailyVerseButton.onclick = () => {
     showAppSection("bible");
@@ -1309,13 +1354,22 @@ function renderBiblePath() {
 }
 
 function renderTabs() {
-  const translation = selectedTranslation();
-  const hasOld = translation.books.some((book) => book.testament === "old");
-  const hasNew = translation.books.some((book) => book.testament === "new");
+  const hasOld = translationForTestament("old").books.some((book) => book.testament === "old");
+  const hasNew = translationForTestament("new").books.some((book) => book.testament === "new");
   els.oldTab.classList.toggle("active", state.activeTestament === "old");
   els.newTab.classList.toggle("active", state.activeTestament === "new");
   els.oldTab.disabled = !hasOld;
   els.newTab.disabled = !hasNew;
+}
+
+async function openTestament(testament) {
+  const translation = translationForTestament(testament);
+  if (translation.id !== state.selectedTranslationId) {
+    await setTranslation(translation.id);
+  }
+
+  const firstBook = selectedTranslation().books.find((book) => book.testament === testament);
+  if (firstBook) setBook(firstBook.id);
 }
 
 function renderBookButtons() {
@@ -2016,13 +2070,11 @@ els.lastReadButton.addEventListener("click", async () => {
   setBook(lastRead.bookId, lastRead.chapter);
 });
 els.chapterReadToggle.addEventListener("click", toggleCurrentChapterRead);
-els.oldTab.addEventListener("click", () => {
-  const firstBook = selectedTranslation().books.find((book) => book.testament === "old");
-  if (firstBook) setBook(firstBook.id);
+els.oldTab.addEventListener("click", async () => {
+  await openTestament("old");
 });
-els.newTab.addEventListener("click", () => {
-  const firstBook = selectedTranslation().books.find((book) => book.testament === "new");
-  if (firstBook) setBook(firstBook.id);
+els.newTab.addEventListener("click", async () => {
+  await openTestament("new");
 });
 els.bookList.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-book-id]");
