@@ -63,30 +63,90 @@ select {
 }
 
 .bible-home {
-  align-items: center;
-  display: grid;
+  background: var(--panel);
+  display: block;
   min-height: 100vh;
-  padding: 28px;
+  padding: 0;
+}
+
+.home-header {
+  align-items: center;
+  border-bottom: 2px solid var(--ink);
+  display: flex;
+  justify-content: space-between;
+  min-height: 82px;
+  padding: 0 max(28px, calc((100vw - 1200px) / 2));
+}
+
+.home-header > strong {
+  font-size: 28px;
+  font-weight: 950;
+}
+
+.home-icon-button {
+  align-items: center;
+  background: var(--panel);
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  color: var(--ink);
+  display: inline-flex;
+  font-size: 22px;
+  height: 44px;
+  justify-content: center;
+  padding: 0;
+  width: 44px;
 }
 
 .bible-home-content {
   margin: 0 auto;
-  max-width: 480px;
+  max-width: 1256px;
+  min-height: calc(100vh - 82px);
+  padding: 54px 28px 72px;
   width: 100%;
+  display: grid;
+  gap: 28px 48px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(380px, 0.9fr);
+}
+
+.home-intro {
+  align-self: start;
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
+.home-intro > p {
+  color: var(--gold);
+  font-size: 14px;
+  font-weight: 900;
+  margin: 0 0 18px;
 }
 
 .bible-home h1 {
   color: var(--ink);
-  font-size: 32px;
+  font-size: 72px;
+  font-weight: 950;
   letter-spacing: 0;
-  margin: 0 0 26px;
-  text-align: center;
+  line-height: 0.92;
+  margin: 0;
+}
+
+.bible-home h1 span {
+  display: block;
+}
+
+.home-title-rule {
+  border-top: 4px solid var(--ink);
+  margin-top: 34px;
+  max-width: 560px;
 }
 
 .home-auth {
+  align-self: end;
   display: grid;
   gap: 10px;
-  margin-bottom: 20px;
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
 }
 
 .home-auth-actions {
@@ -96,97 +156,173 @@ select {
 }
 
 .home-auth-actions button {
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  background: var(--panel);
+  border: 2px solid var(--ink);
+  border-radius: 4px;
   color: var(--ink);
   font: inherit;
   font-weight: 800;
-  min-height: 44px;
+  min-height: 48px;
 }
 
 .home-auth-actions button:hover,
 .home-auth-actions button:focus-visible {
-  border-color: var(--green);
-  color: var(--green);
+  background: var(--ink);
+  color: var(--panel);
 }
 
 .home-auth p {
   color: var(--muted);
   font-size: 13px;
   margin: 0;
-  text-align: center;
+  text-align: left;
 }
 
 .bible-home-actions {
   display: grid;
-  gap: 10px;
+  gap: 14px;
+  grid-column: 2;
+  grid-row: 2;
+  grid-template-columns: 1fr 1fr;
 }
 
 .bible-home-actions button {
-  background: var(--panel-soft);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  align-items: end;
+  background: var(--panel);
+  border: 2px solid var(--ink);
+  border-radius: 4px;
   color: var(--ink);
-  font: inherit;
-  font-size: 17px;
-  font-weight: 800;
-  min-height: 58px;
+  display: grid;
+  gap: 5px 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 154px;
+  padding: 22px;
+  text-align: left;
+}
+
+.bible-home-actions strong {
+  font-size: 27px;
+  grid-column: 1;
+}
+
+.bible-home-actions span:not(.home-action-arrow) {
+  color: var(--muted);
+  font-size: 14px;
+  grid-column: 1;
+}
+
+.home-action-arrow {
+  align-self: center;
+  font-size: 28px;
+  grid-column: 2;
+  grid-row: 1 / span 2;
 }
 
 .bible-home-actions button:hover,
 .bible-home-actions button:focus-visible {
-  background: var(--green);
-  border-color: var(--green);
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--panel);
+}
+
+.bible-home-actions button:hover span,
+.bible-home-actions button:focus-visible span {
   color: var(--panel);
 }
 
 .home-book-picker {
-  border-top: 1px solid var(--line);
-  margin-top: 20px;
-  padding-top: 18px;
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0;
 }
 
 .home-book-picker-heading {
   align-items: center;
+  border-bottom: 4px solid var(--ink);
   display: flex;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 28px;
+  padding-bottom: 22px;
 }
 
 .home-book-picker-heading strong {
   color: var(--ink);
-  font-size: 16px;
+  font-size: 42px;
+  font-weight: 950;
 }
 
 .home-book-picker-heading button {
-  background: transparent;
-  border: 0;
-  color: var(--green);
-  font: inherit;
-  padding: 6px 0;
+  background: var(--panel);
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  color: var(--ink);
+  font-weight: 800;
+  min-height: 42px;
+  padding: 0 14px;
 }
 
 .home-book-list {
   display: grid;
-  gap: 8px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .home-book-list button {
-  background: var(--panel-soft);
-  border: 1px solid var(--line);
-  border-radius: 8px;
+  align-items: end;
+  background: var(--panel);
+  border: 2px solid var(--ink);
+  border-radius: 4px;
   color: var(--ink);
-  font: inherit;
-  min-height: 46px;
-  padding: 10px;
+  display: grid;
+  gap: 6px 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: 126px;
+  padding: 20px;
+  text-align: left;
+}
+
+.home-book-list strong {
+  font-size: 23px;
+  grid-column: 1;
+}
+
+.home-book-list span:not(.home-book-arrow) {
+  color: var(--muted);
+  font-size: 14px;
+  grid-column: 1;
+}
+
+.home-book-arrow {
+  align-self: center;
+  font-size: 22px;
+  grid-column: 2;
+  grid-row: 1 / span 2;
 }
 
 .home-book-list button:hover,
 .home-book-list button:focus-visible {
+  background: var(--green);
   border-color: var(--green);
-  color: var(--green);
+  color: #fff;
+}
+
+.home-book-list button:hover span,
+.home-book-list button:focus-visible span {
+  color: #fff;
+}
+
+body[data-home-picker="old"] .home-intro,
+body[data-home-picker="old"] .home-auth,
+body[data-home-picker="old"] .bible-home-actions,
+body[data-home-picker="new"] .home-intro,
+body[data-home-picker="new"] .home-auth,
+body[data-home-picker="new"] .bible-home-actions {
+  display: none;
+}
+
+body[data-home-picker="old"] .bible-home-content,
+body[data-home-picker="new"] .bible-home-content {
+  display: block;
 }
 
 body[data-bible-view="home"] .main-menu,
@@ -1820,5 +1956,224 @@ body[data-active-section="bible"] .chapter-navigation button {
   body[data-active-section="bible"] .verse-row {
     grid-template-columns: 42px minmax(0, 1fr);
     padding: 11px 12px;
+  }
+}
+
+.reader-mode-bar {
+  align-items: center;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 10px 16px;
+}
+
+.reader-mode-bar > span {
+  color: var(--muted);
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.reader-mode-bar > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  justify-content: flex-end;
+}
+
+.reader-mode-bar button {
+  background: var(--panel);
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 850;
+  min-height: 34px;
+  padding: 0 12px;
+}
+
+.reader-mode-bar button.active {
+  background: var(--ink);
+  color: var(--panel);
+}
+
+.reader-mode-bar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+body[data-active-section="bible"] .reader-chapter-list {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+  max-height: 90px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 1px 7px 1px 1px;
+  scroll-snap-type: none;
+  scrollbar-color: var(--green) var(--panel-soft);
+  scrollbar-width: thin;
+}
+
+body[data-active-section="bible"] .reader-chapter-list::-webkit-scrollbar {
+  height: auto;
+  width: 6px;
+}
+
+body[data-active-section="bible"] .reader-chapter-list button {
+  min-height: 38px;
+  padding: 0 6px;
+  width: auto;
+}
+
+body[data-compare-count="2"] .compare-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+body[data-active-section="bible"] .reader-header h2 {
+  font-size: 34px;
+  font-weight: 950;
+}
+
+body[data-active-section="bible"] .reader-utility-bar,
+body[data-active-section="bible"] .reader-header,
+body[data-active-section="bible"] .reader-mode-bar,
+body[data-active-section="bible"] .reader-passage-navigation,
+body[data-active-section="bible"] .reader-highlighter,
+body[data-active-section="bible"] .verse-list {
+  border-color: color-mix(in srgb, var(--ink) 28%, var(--line));
+}
+
+@media (min-width: 900px) {
+  .main-menu button.active {
+    background: transparent;
+    box-shadow: inset 0 -3px 0 var(--green);
+    color: var(--ink);
+  }
+}
+
+@media (max-width: 899px) {
+  .reader-mode-bar {
+    border-left: 0;
+    border-right: 0;
+    padding: 9px 12px;
+  }
+
+  .reader-mode-bar > div {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    min-width: 0;
+    overflow-x: auto;
+  }
+
+  .reader-mode-bar button {
+    flex: 0 0 auto;
+    padding: 0 10px;
+  }
+
+  body[data-active-section="bible"] .reader-chapter-list {
+    grid-template-columns: repeat(4, minmax(44px, 1fr));
+    max-height: 88px;
+  }
+
+  body[data-active-section="bible"] .reader-header h2 {
+    font-size: 30px;
+  }
+
+  body[data-compare-count="2"] .compare-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .main-menu button.active {
+    background: var(--ink);
+    color: var(--panel);
+  }
+}
+
+@media (max-width: 760px) {
+  .home-header {
+    min-height: 72px;
+    padding: 0 18px;
+  }
+
+  .home-header > strong {
+    font-size: 24px;
+  }
+
+  .home-icon-button {
+    height: 40px;
+    width: 40px;
+  }
+
+  .bible-home-content {
+    display: block;
+    min-height: calc(100vh - 72px);
+    padding: 32px 18px 48px;
+  }
+
+  .home-intro {
+    margin-bottom: 30px;
+  }
+
+  .home-intro > p {
+    margin-bottom: 14px;
+  }
+
+  .bible-home h1 {
+    font-size: 50px;
+  }
+
+  .home-title-rule {
+    border-top-width: 3px;
+    margin-top: 24px;
+  }
+
+  .home-auth {
+    margin-bottom: 18px;
+  }
+
+  .bible-home-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .bible-home-actions button {
+    min-height: 132px;
+    padding: 16px;
+  }
+
+  .bible-home-actions strong {
+    font-size: 21px;
+  }
+
+  .home-action-arrow {
+    font-size: 22px;
+  }
+
+  .home-book-picker-heading {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+  }
+
+  .home-book-picker-heading strong {
+    font-size: 30px;
+  }
+
+  .home-book-list {
+    gap: 10px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-book-list button {
+    min-height: 112px;
+    padding: 15px;
+  }
+
+  .home-book-list strong {
+    font-size: 19px;
+    overflow-wrap: anywhere;
   }
 }

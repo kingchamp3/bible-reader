@@ -4,12 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>성경을 읽다 - 성경 번역본</title>
-    <link rel="stylesheet" href="./styles.css?v=reader-layout-v1" />
+    <link rel="stylesheet" href="./styles.css?v=benchmark-layout-v1" />
   </head>
-  <body data-bible-view="home">
+  <body data-bible-view="home" data-home-picker="none">
     <section class="bible-home" aria-label="성경 선택">
+      <header class="home-header">
+        <strong>성경</strong>
+        <button
+          id="homeThemeToggle"
+          class="home-icon-button"
+          type="button"
+          aria-label="어두운 화면으로 전환"
+          title="화면 테마"
+        >
+          ◐
+        </button>
+      </header>
       <div class="bible-home-content">
-        <h1>성경을 읽다</h1>
+        <section class="home-intro">
+          <p>말씀을 가까이</p>
+          <h1><span>성경을</span><span>읽다</span></h1>
+          <div class="home-title-rule" aria-hidden="true"></div>
+        </section>
         <div class="home-auth" aria-label="로그인 및 회원가입">
           <div class="home-auth-actions">
             <button id="homeGoogleLoginButton" type="button">Google 로그인</button>
@@ -18,8 +34,16 @@
           <p id="homeAuthStatus" aria-live="polite">로그인 없이 성경을 읽을 수 있습니다.</p>
         </div>
         <div class="bible-home-actions">
-          <button id="homeOldTestament" type="button">구약성서</button>
-          <button id="homeNewTestament" type="button">신약성서</button>
+          <button id="homeOldTestament" type="button">
+            <strong>구약성서</strong>
+            <span>39권의 책</span>
+            <span class="home-action-arrow" aria-hidden="true">→</span>
+          </button>
+          <button id="homeNewTestament" type="button">
+            <strong>신약성서</strong>
+            <span>27권의 책</span>
+            <span class="home-action-arrow" aria-hidden="true">→</span>
+          </button>
         </div>
         <section id="homeBookPicker" class="home-book-picker" aria-live="polite" hidden>
           <div class="home-book-picker-heading">
@@ -165,6 +189,16 @@
             </div>
           </header>
 
+          <section id="readerModeBar" class="reader-mode-bar" aria-label="빠른 번역 보기">
+            <span>빠른 보기</span>
+            <div>
+              <button type="button" data-reader-mode="krv">한글</button>
+              <button type="button" data-reader-mode="niv">NIV</button>
+              <button type="button" data-reader-mode="compare-2">2개 대조</button>
+              <button type="button" data-reader-mode="compare-3">3개 대조</button>
+            </div>
+          </section>
+
           <section class="reader-passage-navigation" aria-label="성경책과 장 이동">
             <nav class="reader-chapter-strip-navigation" aria-label="현재 성경책의 장 선택">
               <strong id="readerBookName" class="reader-current-book">창세기</strong>
@@ -265,6 +299,6 @@
     <script src="./bibles-data.js?v=today-menu-v1"></script>
     <script src="./sblgnt-loader.js?v=today-menu-v1"></script>
     <script src="./wlc-loader.js?v=today-menu-v1"></script>
-    <script type="module" src="./app.js?v=reader-layout-v1"></script>
+    <script type="module" src="./app.js?v=benchmark-layout-v1"></script>
   </body>
 </html>
