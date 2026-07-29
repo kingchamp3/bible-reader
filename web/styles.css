@@ -78,9 +78,22 @@ select {
   padding: 0 max(28px, calc((100vw - 1200px) / 2));
 }
 
-.home-header > strong {
+.home-brand-link {
+  color: var(--ink);
   font-size: 28px;
   font-weight: 950;
+  text-decoration: none;
+}
+
+.home-brand-link:hover {
+  color: var(--green);
+}
+
+.home-brand-link:focus-visible,
+.main-menu-brand:focus-visible {
+  border-radius: 3px;
+  outline: 3px solid color-mix(in srgb, var(--green) 45%, transparent);
+  outline-offset: 4px;
 }
 
 .home-icon-button {
@@ -1757,6 +1770,7 @@ body[data-sidebar-open="true"] .sidebar-backdrop {
 
 .main-menu-brand {
   display: none;
+  text-decoration: none;
 }
 
 .reader-utility-bar {
@@ -1893,6 +1907,10 @@ body[data-active-section="bible"] .chapter-navigation button {
     font-size: 18px;
     margin-right: auto;
     white-space: nowrap;
+  }
+
+  .main-menu-brand:hover {
+    color: var(--green);
   }
 
   .main-menu button {
@@ -2100,7 +2118,7 @@ body[data-active-section="bible"] .verse-list {
     padding: 0 18px;
   }
 
-  .home-header > strong {
+  .home-brand-link {
     font-size: 24px;
   }
 
