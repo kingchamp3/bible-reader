@@ -4,12 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>성경을 읽다 - 성경 번역본</title>
-    <link rel="stylesheet" href="./styles.css?v=testament-fallback-v1" />
+    <link rel="stylesheet" href="./styles.css?v=global-home-v1" />
   </head>
   <body data-bible-view="home" data-home-picker="none">
     <section class="bible-home" aria-label="성경 선택">
       <header class="home-header">
-        <strong>성경</strong>
+        <a class="home-brand-link" href="./" data-home-action aria-label="홈으로 이동">성경을 읽다</a>
         <button
           id="homeThemeToggle"
           class="home-icon-button"
@@ -56,8 +56,8 @@
     </section>
 
     <nav class="main-menu" aria-label="주요 메뉴">
-      <strong class="main-menu-brand">성경을 읽다</strong>
-      <button id="homeButton" type="button">처음</button>
+      <a class="main-menu-brand" href="./" data-home-action aria-label="홈으로 이동">성경을 읽다</a>
+      <button id="homeButton" type="button" data-home-action>홈</button>
       <button class="active" type="button" data-app-section="bible">성경</button>
       <button type="button" data-app-section="today">오늘</button>
       <button type="button" data-app-section="devotional">묵상</button>
@@ -299,6 +299,6 @@
     <script src="./bibles-data.js?v=today-menu-v1"></script>
     <script src="./sblgnt-loader.js?v=today-menu-v1"></script>
     <script src="./wlc-loader.js?v=today-menu-v1"></script>
-    <script type="module" src="./app.js?v=testament-fallback-v1"></script>
+    <script type="module" src="./app.js?v=global-home-v1"></script>
   </body>
 </html>

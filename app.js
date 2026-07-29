@@ -155,7 +155,7 @@ const recommendedDailyVerseRefs = [
 const els = {
   appMenuButtons: document.querySelectorAll("[data-app-section]"),
   contentSections: document.querySelectorAll("[data-content-section]"),
-  homeButton: document.querySelector("#homeButton"),
+  homeActions: document.querySelectorAll("[data-home-action]"),
   toolsMenuButton: document.querySelector("#toolsMenuButton"),
   readerBookMenuButton: document.querySelector("#readerBookMenuButton"),
   closeSidebarButton: document.querySelector("#closeSidebarButton"),
@@ -907,13 +907,19 @@ async function openHomeBook(bookId) {
 
 function showBibleHome() {
   setSidebarOpen(false);
+  showAppSection("bible");
   state.homeTestament = null;
   renderHomeBookPicker();
   document.body.dataset.bibleView = "home";
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-els.homeButton?.addEventListener("click", showBibleHome);
+els.homeActions.forEach((control) => {
+  control.addEventListener("click", (event) => {
+    event.preventDefault();
+    showBibleHome();
+  });
+});
 els.homeOldTestament?.addEventListener("click", () => chooseHomeTestament("old"));
 els.homeNewTestament?.addEventListener("click", () => chooseHomeTestament("new"));
 els.homeBookPickerBack?.addEventListener("click", () => {
