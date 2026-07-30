@@ -1,5 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Pressable,
   SafeAreaView,
@@ -7,6 +8,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  Linking,
   View,
 } from 'react-native';
 
@@ -36,6 +38,13 @@ type BibleTranslation = {
   id: string;
   name: string;
   language: string;
+  source?: {
+    copyright: string;
+    license: string;
+    licenseUrl: string;
+    title: string;
+    url: string;
+  };
   verseCount: number;
   books: BibleBook[];
 };
@@ -53,6 +62,16 @@ type SearchResult = BibleVerse & {
 
 const BIBLE_BUNDLE = bibleBundle as BibleBundle;
 const SEARCH_RESULT_LIMIT = 200;
+const READER_PREFERENCES_KEY = 'bible-reader:preferences:v1';
+const PRIVACY_POLICY_URL = 'https://kingchamp3.github.io/bible-reader/app-privacy.html';
+
+type ReaderPreferences = {
+  bookmarks: string[];
+  fontSize: number;
+  selectedBookId: string;
+  selectedChapterNumber: number;
+  selectedTranslationId: string;
+};
 
 const testamentLabel: Record<Testament, string> = {
   old: '구약',
@@ -69,6 +88,92 @@ export default function App() {
   const [fontSize, setFontSize] = useState(20);
   const [showFavorites, setShowFavorites] = useState(false);
   const [bookmarks, setBookmarks] = useState<string[]>([]);
+  const [hasLoadedPreferences, setHasLoadedPreferences] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadPreferences = async () => {
+      try {
+        const storedPreferences = await AsyncStorage.getItem(READER_PREFERENCES_KEY);
+
+        if (!storedPreferences || !isMounted) {
+          return;
+        }
+
+        const preferences = JSON.parse(storedPreferences) as Partial<ReaderPreferences>;
+        const savedTranslation =
+          BIBLE_BUNDLE.translations.find(
+            (translation) => translation.id === preferences.selectedTranslationId,
+          ) ?? BIBLE_BUNDLE.translations[0];
+        const savedBook =
+          savedTranslation.books.find((book) => book.id === preferences.selectedBookId) ??
+          savedTranslation.books[0];
+        const savedChapter =
+          savedBook.chapters.find(
+            (chapter) => chapter.chapter === preferences.selectedChapterNumber,
+          ) ?? savedBook.chapters[0];
+
+        setSelectedTranslationId(savedTranslation.id);
+        setSelectedBookId(savedBook.id);
+        setSelectedChapterNumber(savedChapter.chapter);
+
+        if (
+          typeof preferences.fontSize === 'number' &&
+          preferences.fontSize >= 16 &&
+          preferences.fontSize <= 30
+        ) {
+          setFontSize(preferences.fontSize);
+        }
+
+        if (Array.isArray(preferences.bookmarks)) {
+          setBookmarks(
+            preferences.bookmarks.filter(
+              (bookmark): bookmark is string =>
+                typeof bookmark === 'string' && bookmark.length > 0 && bookmark.length <= 100,
+            ),
+          );
+        }
+      } catch (error) {
+        console.warn('저장된 읽기 설정을 불러오지 못했습니다.', error);
+      } finally {
+        if (isMounted) {
+          setHasLoadedPreferences(true);
+        }
+      }
+    };
+
+    void loadPreferences();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedPreferences) {
+      return;
+    }
+
+    const preferences: ReaderPreferences = {
+      bookmarks,
+      fontSize,
+      selectedBookId,
+      selectedChapterNumber,
+      selectedTranslationId,
+    };
+
+    AsyncStorage.setItem(READER_PREFERENCES_KEY, JSON.stringify(preferences)).catch((error) => {
+      console.warn('읽기 설정을 저장하지 못했습니다.', error);
+    });
+  }, [
+    bookmarks,
+    fontSize,
+    hasLoadedPreferences,
+    selectedBookId,
+    selectedChapterNumber,
+    selectedTranslationId,
+  ]);
 
   const selectedTranslation =
     BIBLE_BUNDLE.translations.find((translation) => translation.id === selectedTranslationId) ??
@@ -391,6 +496,31 @@ export default function App() {
             )}
           </>
         )}
+        {selectedTranslation.source ? (
+          <View style={styles.sourceAttribution}>
+            <Text style={styles.sourceLabel}>본문 출처</Text>
+            <Pressable
+              accessibilityRole="link"
+              onPress={() => void Linking.openURL(selectedTranslation.source!.url)}
+            >
+              <Text style={styles.sourceLink}>{selectedTranslation.source.title}</Text>
+            </Pressable>
+            <Text style={styles.sourceCopyright}>{selectedTranslation.source.copyright}</Text>
+            <Pressable
+              accessibilityRole="link"
+              onPress={() => void Linking.openURL(selectedTranslation.source!.licenseUrl)}
+            >
+              <Text style={styles.sourceLink}>{selectedTranslation.source.license}</Text>
+            </Pressable>
+          </View>
+        ) : null}
+        <Pressable
+          accessibilityRole="link"
+          onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
+          style={styles.privacyLink}
+        >
+          <Text style={styles.privacyLinkText}>개인정보처리방침</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -653,5 +783,40 @@ const styles = StyleSheet.create({
   emptyText: {
     color: '#69736b',
     fontSize: 14,
+  },
+  sourceAttribution: {
+    borderTopColor: '#ded8cc',
+    borderTopWidth: 1,
+    marginTop: 28,
+    paddingTop: 18,
+  },
+  sourceLabel: {
+    color: '#46534c',
+    fontSize: 12,
+    fontWeight: '800',
+    marginBottom: 5,
+  },
+  sourceLink: {
+    color: '#2f6f4e',
+    fontSize: 13,
+    lineHeight: 21,
+    textDecorationLine: 'underline',
+  },
+  sourceCopyright: {
+    color: '#69736b',
+    fontSize: 12,
+    lineHeight: 19,
+    marginVertical: 4,
+  },
+  privacyLink: {
+    alignSelf: 'center',
+    marginTop: 32,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  privacyLinkText: {
+    color: '#5c675f',
+    fontSize: 13,
+    textDecorationLine: 'underline',
   },
 });

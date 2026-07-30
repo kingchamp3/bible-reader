@@ -11,6 +11,7 @@ node_modules/
 source-data/
 dist/
 web-build/
+tmp/
 expo-env.d.ts
 
 # Native

@@ -1,0 +1,38 @@
+# Dependencies and local caches
+node_modules/
+.expo/
+.dotslash-cache/
+.npm-cache/
+.user-home/
+
+# Generated and local-only files
+source-data/
+dist/
+web-build/
+tmp/
+expo-env.d.ts
+*.tsbuildinfo
+*.log
+
+# Native credentials and generated projects
+android/
+ios/
+*.jks
+*.keystore
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+
+# Web deployment sources are not used by the native Android build
+web/
+scripts/
+play-store/
+bible-reader-web.html
+open-web.bat
+
+# Repository and editor metadata
+.git/
+.github/
+.DS_Store
