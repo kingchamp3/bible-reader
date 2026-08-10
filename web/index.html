@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>성경을 읽다 - 성경 번역본</title>
-    <link rel="stylesheet" href="./styles.css?v=passage-selectors-v1" />
+    <link rel="stylesheet" href="./styles.css?v=reader-ratio-v1" />
   </head>
   <body data-bible-view="home" data-home-picker="none">
     <section class="bible-home" aria-label="성경 선택">
@@ -160,11 +160,74 @@
 
       <section class="reader-panel">
         <section class="content-section active" data-content-section="bible">
-          <section class="reader-utility-bar" aria-label="성경 읽기 도구">
-            <label class="reader-translation-control">
-              <span>번역본</span>
-              <select id="translationSelect"></select>
-            </label>
+          <section class="reader-top-layout" aria-label="성경 읽기 상단 도구">
+            <section class="reader-passage-navigation" aria-label="성경책과 장 이동">
+              <div class="reader-passage-selectors">
+                <label class="reader-passage-select reader-book-select">
+                  <span>성경책</span>
+                  <select id="readerBookSelect" aria-label="성경책 선택"></select>
+                </label>
+                <label class="reader-passage-select">
+                  <span>장</span>
+                  <select id="readerChapterSelect" aria-label="장 선택"></select>
+                </label>
+                <label class="reader-passage-select">
+                  <span>절</span>
+                  <select id="readerVerseSelect" aria-label="절 선택"></select>
+                </label>
+              </div>
+              <nav class="chapter-navigation chapter-navigation-top" aria-label="장 이동">
+                <button type="button" data-chapter-direction="previous" aria-label="이전 장">
+                  <span class="chapter-direction-symbol" aria-hidden="true">‹</span>
+                  <span class="chapter-direction-text">이전 장</span>
+                </button>
+                <button type="button" data-chapter-direction="next" aria-label="다음 장">
+                  <span class="chapter-direction-text">다음 장</span>
+                  <span class="chapter-direction-symbol" aria-hidden="true">›</span>
+                </button>
+              </nav>
+            </section>
+
+            <div class="reader-top-tools">
+              <section class="reader-utility-bar" aria-label="성경 읽기 도구">
+                <label class="reader-translation-control">
+                  <span>번역본</span>
+                  <select id="translationSelect"></select>
+                </label>
+              </section>
+
+              <header class="reader-header">
+                <div>
+                  <p id="readerMeta" class="reader-meta">개역한글</p>
+                  <h2 id="readerTitle">창세기 1장</h2>
+                </div>
+                <div class="bookmark-count">
+                  <strong id="bookmarkCount">0</strong>
+                  <span>저장</span>
+                </div>
+              </header>
+
+              <section id="readerModeBar" class="reader-mode-bar" aria-label="빠른 번역 보기">
+                <span>빠른 보기</span>
+                <div>
+                  <button type="button" data-reader-mode="krv">한글</button>
+                  <button type="button" data-reader-mode="niv">NIV</button>
+                  <button type="button" data-reader-mode="compare-2">2개 대조</button>
+                  <button type="button" data-reader-mode="compare-3">3개 대조</button>
+                </div>
+              </section>
+
+              <section class="reader-highlighter" aria-label="형광펜">
+                <span>형광펜</span>
+                <div id="readerHighlightPalette" class="reader-highlight-palette">
+                  <button class="highlight-swatch highlight-yellow" type="button" data-reader-highlight="yellow" aria-label="노랑 형광펜" title="노랑 형광펜"></button>
+                  <button class="highlight-swatch highlight-green" type="button" data-reader-highlight="green" aria-label="초록 형광펜" title="초록 형광펜"></button>
+                  <button class="highlight-swatch highlight-pink" type="button" data-reader-highlight="pink" aria-label="분홍 형광펜" title="분홍 형광펜"></button>
+                  <button class="highlight-swatch highlight-blue" type="button" data-reader-highlight="blue" aria-label="파랑 형광펜" title="파랑 형광펜"></button>
+                  <button class="highlight-clear" type="button" data-reader-highlight="clear">지우기</button>
+                </div>
+              </section>
+            </div>
           </section>
 
           <section id="readerSearchPanel" class="reader-search-panel" aria-label="성경 검색" hidden>
@@ -175,65 +238,14 @@
             <button id="closeSearchButton" type="button" aria-label="검색 닫기" title="검색 닫기">×</button>
           </section>
 
-          <header class="reader-header">
-            <div>
-              <p id="readerMeta" class="reader-meta">개역한글</p>
-              <h2 id="readerTitle">창세기 1장</h2>
-            </div>
-            <div class="bookmark-count">
-              <strong id="bookmarkCount">0</strong>
-              <span>저장</span>
-            </div>
-          </header>
-
-          <section id="readerModeBar" class="reader-mode-bar" aria-label="빠른 번역 보기">
-            <span>빠른 보기</span>
-            <div>
-              <button type="button" data-reader-mode="krv">한글</button>
-              <button type="button" data-reader-mode="niv">NIV</button>
-              <button type="button" data-reader-mode="compare-2">2개 대조</button>
-              <button type="button" data-reader-mode="compare-3">3개 대조</button>
-            </div>
-          </section>
-
-          <section class="reader-passage-navigation" aria-label="성경책과 장 이동">
-            <div class="reader-passage-selectors">
-              <label class="reader-passage-select reader-book-select">
-                <span>성경책</span>
-                <select id="readerBookSelect" aria-label="성경책 선택"></select>
-              </label>
-              <label class="reader-passage-select">
-                <span>장</span>
-                <select id="readerChapterSelect" aria-label="장 선택"></select>
-              </label>
-              <label class="reader-passage-select">
-                <span>절</span>
-                <select id="readerVerseSelect" aria-label="절 선택"></select>
-              </label>
-            </div>
-            <nav class="chapter-navigation chapter-navigation-top" aria-label="장 이동">
+          <section class="reader-body-layout" aria-label="성경 본문">
+            <section id="resultSummary" class="result-summary" hidden></section>
+            <article id="verseList" class="verse-list" aria-live="polite"></article>
+            <nav class="chapter-navigation chapter-navigation-bottom" aria-label="본문 아래 장 이동">
               <button type="button" data-chapter-direction="previous">‹ 이전 장</button>
               <button type="button" data-chapter-direction="next">다음 장 ›</button>
             </nav>
           </section>
-
-          <section class="reader-highlighter" aria-label="형광펜">
-            <span>형광펜</span>
-            <div id="readerHighlightPalette" class="reader-highlight-palette">
-              <button class="highlight-swatch highlight-yellow" type="button" data-reader-highlight="yellow" aria-label="노랑 형광펜" title="노랑 형광펜"></button>
-              <button class="highlight-swatch highlight-green" type="button" data-reader-highlight="green" aria-label="초록 형광펜" title="초록 형광펜"></button>
-              <button class="highlight-swatch highlight-pink" type="button" data-reader-highlight="pink" aria-label="분홍 형광펜" title="분홍 형광펜"></button>
-              <button class="highlight-swatch highlight-blue" type="button" data-reader-highlight="blue" aria-label="파랑 형광펜" title="파랑 형광펜"></button>
-              <button class="highlight-clear" type="button" data-reader-highlight="clear">지우기</button>
-            </div>
-          </section>
-
-          <section id="resultSummary" class="result-summary" hidden></section>
-          <article id="verseList" class="verse-list" aria-live="polite"></article>
-          <nav class="chapter-navigation chapter-navigation-bottom" aria-label="본문 아래 장 이동">
-            <button type="button" data-chapter-direction="previous">‹ 이전 장</button>
-            <button type="button" data-chapter-direction="next">다음 장 ›</button>
-          </nav>
         </section>
 
         <section class="content-section today-panel" data-content-section="today" aria-label="오늘의 말씀">
@@ -306,6 +318,6 @@
     <script src="./bibles-data.js?v=today-menu-v1"></script>
     <script src="./sblgnt-loader.js?v=today-menu-v1"></script>
     <script src="./wlc-loader.js?v=today-menu-v1"></script>
-    <script type="module" src="./app.js?v=passage-selectors-v1"></script>
+    <script type="module" src="./app.js?v=reader-ratio-v1"></script>
   </body>
 </html>

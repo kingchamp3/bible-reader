@@ -798,6 +798,7 @@ function setBook(bookId, chapter = 1) {
   state.highlightFilter = null;
   state.lastTextSelection = null;
   render();
+  scrollReaderToTop("auto");
 }
 
 function setChapter(chapter) {
@@ -808,6 +809,7 @@ function setChapter(chapter) {
   state.highlightFilter = null;
   state.lastTextSelection = null;
   render();
+  scrollReaderToTop("auto");
 }
 
 function chapterLocations() {
@@ -829,9 +831,12 @@ function adjacentChapterLocation(direction) {
   return locations[currentIndex + (direction === "previous" ? -1 : 1)] || null;
 }
 
-function scrollReaderToTop() {
+function scrollReaderToTop(behavior = "smooth") {
   requestAnimationFrame(() => {
-    els.bibleReader.scrollIntoView({ behavior: "smooth", block: "start" });
+    els.verseList.scrollTo({ top: 0, behavior });
+    if (document.body.dataset.activeSection !== "bible") {
+      els.bibleReader.scrollIntoView({ behavior, block: "start" });
+    }
   });
 }
 
@@ -858,7 +863,6 @@ function scrollToVerse(verse) {
 function openChapterLocation(location) {
   if (!location) return;
   setBook(location.bookId, location.chapter);
-  scrollReaderToTop();
 }
 
 function renderChapterNavigation() {
@@ -2171,11 +2175,9 @@ els.chapterList.addEventListener("click", (event) => {
 });
 els.readerBookSelect.addEventListener("change", (event) => {
   setBook(event.target.value);
-  scrollReaderToTop();
 });
 els.readerChapterSelect.addEventListener("change", (event) => {
   setChapter(event.target.value);
-  scrollReaderToTop();
 });
 els.readerVerseSelect.addEventListener("change", (event) => {
   scrollToVerse(event.target.value);
