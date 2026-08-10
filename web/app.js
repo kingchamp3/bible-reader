@@ -78,6 +78,7 @@ const state = {
   compareTranslationId2: defaultCompareTranslationIds()[1],
   selectedBookId: bibleBundle.translations[0].books[0].id,
   selectedChapter: 1,
+  selectedVerse: 1,
   fontSize: 20,
   showFavorites: false,
   highlightFilter: null,
@@ -97,7 +98,6 @@ const state = {
   gratitudeStatus: "",
   homeTestament: null,
 };
-let renderedReaderChapterKey = "";
 
 const recommendedDailyVerseRefs = [
   ["john", 3, 16],
@@ -157,7 +157,9 @@ const els = {
   contentSections: document.querySelectorAll("[data-content-section]"),
   homeActions: document.querySelectorAll("[data-home-action]"),
   toolsMenuButton: document.querySelector("#toolsMenuButton"),
-  readerBookMenuButton: document.querySelector("#readerBookMenuButton"),
+  searchMenuButton: document.querySelector("#searchMenuButton"),
+  readerSearchPanel: document.querySelector("#readerSearchPanel"),
+  closeSearchButton: document.querySelector("#closeSearchButton"),
   closeSidebarButton: document.querySelector("#closeSidebarButton"),
   sidebarBackdrop: document.querySelector("#sidebarBackdrop"),
   sidebar: document.querySelector(".sidebar"),
@@ -205,8 +207,9 @@ const els = {
   biblePath: document.querySelector("#biblePath"),
   bookList: document.querySelector("#bookList"),
   chapterList: document.querySelector("#chapterList"),
-  readerBookName: document.querySelector("#readerBookName"),
-  readerChapterList: document.querySelector("#readerChapterList"),
+  readerBookSelect: document.querySelector("#readerBookSelect"),
+  readerChapterSelect: document.querySelector("#readerChapterSelect"),
+  readerVerseSelect: document.querySelector("#readerVerseSelect"),
   readerModeBar: document.querySelector("#readerModeBar"),
   chapterDirectionButtons: document.querySelectorAll("[data-chapter-direction]"),
   oldTab: document.querySelector("#oldTab"),
@@ -237,10 +240,35 @@ function showAppSection(sectionId) {
   });
 }
 
+function setSearchPanelOpen(open, clearQuery = false) {
+  if (!els.readerSearchPanel || !els.searchMenuButton) return;
+
+  els.readerSearchPanel.hidden = !open;
+  els.searchMenuButton.setAttribute("aria-expanded", String(open));
+  els.searchMenuButton.classList.toggle("active", open);
+
+  if (open) {
+    els.appMenuButtons.forEach((button) => button.classList.remove("active"));
+    requestAnimationFrame(() => els.searchInput.focus());
+  } else {
+    const activeSection = document.body.dataset.activeSection;
+    els.appMenuButtons.forEach((button) => {
+      button.classList.toggle("active", button.dataset.appSection === activeSection);
+    });
+  }
+
+  if (clearQuery && els.searchInput.value) {
+    els.searchInput.value = "";
+    state.showFavorites = false;
+    state.highlightFilter = null;
+    renderHeader();
+    renderVerses();
+  }
+}
+
 function setSidebarOpen(open) {
   document.body.dataset.sidebarOpen = open ? "true" : "false";
   els.toolsMenuButton?.setAttribute("aria-expanded", String(open));
-  els.readerBookMenuButton?.setAttribute("aria-expanded", String(open));
 }
 
 function selectedTranslation() {
@@ -745,6 +773,9 @@ async function setTranslation(translationId) {
   }
   state.selectedBookId = nextBook.id;
   state.selectedChapter = nextChapter.chapter;
+  state.selectedVerse = nextChapter.verses.some((verse) => verse.verse === state.selectedVerse)
+    ? state.selectedVerse
+    : nextChapter.verses[0]?.verse || 1;
   state.activeTestament = nextBook.testament;
   els.searchInput.value = "";
   state.showFavorites = false;
@@ -759,7 +790,8 @@ function setBook(bookId, chapter = 1) {
   if (!book) return;
 
   state.selectedBookId = book.id;
-  state.selectedChapter = chapter;
+  state.selectedChapter = Number(chapter);
+  state.selectedVerse = 1;
   state.activeTestament = book.testament;
   els.searchInput.value = "";
   state.showFavorites = false;
@@ -770,6 +802,7 @@ function setBook(bookId, chapter = 1) {
 
 function setChapter(chapter) {
   state.selectedChapter = Number(chapter);
+  state.selectedVerse = 1;
   els.searchInput.value = "";
   state.showFavorites = false;
   state.highlightFilter = null;
@@ -802,6 +835,26 @@ function scrollReaderToTop() {
   });
 }
 
+function scrollToVerse(verse) {
+  const verseNumber = Number(verse);
+  if (!Number.isFinite(verseNumber)) return;
+
+  state.selectedVerse = verseNumber;
+  els.searchInput.value = "";
+  state.showFavorites = false;
+  state.highlightFilter = null;
+  state.lastTextSelection = null;
+  render();
+
+  requestAnimationFrame(() => {
+    const row = els.verseList.querySelector(`[data-verse-number="${verseNumber}"]`);
+    if (!row) return;
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
+    row.classList.add("verse-target");
+    window.setTimeout(() => row.classList.remove("verse-target"), 1400);
+  });
+}
+
 function openChapterLocation(location) {
   if (!location) return;
   setBook(location.bookId, location.chapter);
@@ -811,37 +864,50 @@ function openChapterLocation(location) {
 function renderChapterNavigation() {
   const translation = selectedTranslation();
   const book = selectedBook();
-  const previousScrollTop = els.readerChapterList.scrollTop;
-  const nextReaderChapterKey = `${translation.id}:${book.id}:${state.selectedChapter}`;
-  const shouldCenterSelectedChapter = renderedReaderChapterKey !== nextReaderChapterKey;
-  const fragment = document.createDocumentFragment();
+  const chapter = selectedChapter();
+  const bookOptions = document.createDocumentFragment();
 
-  book.chapters.forEach((item) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.readerChapter = item.chapter;
-    button.textContent = `${item.chapter}장`;
-    button.title = `${book.name} ${item.chapter}장으로 이동`;
-    button.classList.toggle("active", item.chapter === state.selectedChapter);
-    button.setAttribute("aria-pressed", String(item.chapter === state.selectedChapter));
-    fragment.append(button);
+  [
+    ["old", "구약성서"],
+    ["new", "신약성서"],
+  ].forEach(([testament, label]) => {
+    const books = translation.books.filter((item) => item.testament === testament);
+    if (!books.length) return;
+
+    const group = document.createElement("optgroup");
+    group.label = label;
+    books.forEach((item) => {
+      const option = document.createElement("option");
+      option.value = item.id;
+      option.textContent = item.name;
+      group.append(option);
+    });
+    bookOptions.append(group);
   });
 
-  els.readerBookName.textContent = book.name;
-  els.readerChapterList.replaceChildren(fragment);
-  renderedReaderChapterKey = nextReaderChapterKey;
-  if (shouldCenterSelectedChapter) {
-    requestAnimationFrame(() => {
-      const selectedButton = els.readerChapterList.querySelector("button.active");
-      if (!selectedButton) return;
-      els.readerChapterList.scrollTop = Math.max(
-        0,
-        selectedButton.offsetTop - (els.readerChapterList.clientHeight - selectedButton.offsetHeight) / 2,
-      );
-    });
-  } else {
-    els.readerChapterList.scrollTop = previousScrollTop;
+  const chapterOptions = book.chapters.map((item) => {
+    const option = document.createElement("option");
+    option.value = item.chapter;
+    option.textContent = `${item.chapter}장`;
+    return option;
+  });
+  const verseOptions = chapter.verses.map((item) => {
+    const option = document.createElement("option");
+    option.value = item.verse;
+    option.textContent = `${item.verse}절`;
+    return option;
+  });
+
+  if (!chapter.verses.some((item) => item.verse === state.selectedVerse)) {
+    state.selectedVerse = chapter.verses[0]?.verse || 1;
   }
+
+  els.readerBookSelect.replaceChildren(bookOptions);
+  els.readerChapterSelect.replaceChildren(...chapterOptions);
+  els.readerVerseSelect.replaceChildren(...verseOptions);
+  els.readerBookSelect.value = book.id;
+  els.readerChapterSelect.value = String(chapter.chapter);
+  els.readerVerseSelect.value = String(state.selectedVerse);
 
   els.chapterDirectionButtons.forEach((button) => {
     const direction = button.dataset.chapterDirection;
@@ -900,12 +966,14 @@ async function openHomeBook(bookId) {
     await setTranslation(translation.id);
   }
   document.body.dataset.bibleView = "reader";
+  setSearchPanelOpen(false, true);
   setSidebarOpen(false);
   showAppSection("bible");
   setBook(bookId);
 }
 
 function showBibleHome() {
+  setSearchPanelOpen(false, true);
   setSidebarOpen(false);
   showAppSection("bible");
   state.homeTestament = null;
@@ -1463,6 +1531,7 @@ function renderHeader() {
       : comparing
         ? `${book.name} ${chapter.chapter}장 대조`
         : `${book.name} ${chapter.chapter}장`;
+  els.readerTitle.hidden = !state.showFavorites && !state.highlightFilter && !searching;
   document.documentElement.style.setProperty("--reader-font-size", `${state.fontSize}px`);
   els.fontSizeLabel.textContent = state.fontSize;
   els.bookmarkCount.textContent = state.bookmarks.size;
@@ -1739,6 +1808,7 @@ function createVerseRow({ bookId, chapter, verse, text, tokens, refLabel, search
   const row = document.createElement("section");
   row.className = `verse-row${marked ? " marked" : ""}`;
   row.dataset.verseId = id;
+  row.dataset.verseNumber = verse;
   applyHighlight(row, id);
 
   const ref = document.createElement("button");
@@ -1856,6 +1926,7 @@ function createCompareVerseRow(verseData) {
   const row = document.createElement("section");
   row.className = `verse-row compare-row${marked ? " marked" : ""}`;
   row.dataset.verseId = id;
+  row.dataset.verseNumber = verse;
   applyHighlight(row, id);
 
   const ref = document.createElement("button");
@@ -2098,12 +2169,16 @@ els.chapterList.addEventListener("click", (event) => {
     });
   }
 });
-els.readerChapterList.addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-reader-chapter]");
-  if (button) {
-    setChapter(button.dataset.readerChapter);
-    scrollReaderToTop();
-  }
+els.readerBookSelect.addEventListener("change", (event) => {
+  setBook(event.target.value);
+  scrollReaderToTop();
+});
+els.readerChapterSelect.addEventListener("change", (event) => {
+  setChapter(event.target.value);
+  scrollReaderToTop();
+});
+els.readerVerseSelect.addEventListener("change", (event) => {
+  scrollToVerse(event.target.value);
 });
 els.chapterDirectionButtons.forEach((button) => {
   button.addEventListener("click", () => {
@@ -2173,6 +2248,7 @@ els.readerHighlightPalette.addEventListener("click", (event) => {
 els.appMenuButtons.forEach((button) => {
   button.addEventListener("click", () => {
     const sectionId = button.dataset.appSection;
+    setSearchPanelOpen(false, true);
     showAppSection(sectionId);
     if (sectionId === "bible") {
       setSidebarOpen(true);
@@ -2184,6 +2260,16 @@ els.appMenuButtons.forEach((button) => {
     }
   });
 });
+els.searchMenuButton?.addEventListener("click", () => {
+  const opening = els.readerSearchPanel.hidden;
+  if (opening) {
+    document.body.dataset.bibleView = "reader";
+    setSidebarOpen(false);
+    showAppSection("bible");
+  }
+  setSearchPanelOpen(opening, !opening);
+});
+els.closeSearchButton?.addEventListener("click", () => setSearchPanelOpen(false, true));
 els.selectionActionMenu.addEventListener("pointerdown", (event) => event.preventDefault());
 els.selectionActionMenu.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-selection-action]");
@@ -2203,17 +2289,15 @@ els.selectionActionMenu.addEventListener("click", (event) => {
 });
 els.toolsMenuButton?.addEventListener("click", () => {
   const opening = document.body.dataset.sidebarOpen !== "true";
+  if (opening) setSearchPanelOpen(false, true);
   setSidebarOpen(opening);
   if (opening) requestAnimationFrame(() => els.sidebar.scrollTo({ top: 0, behavior: "auto" }));
-});
-els.readerBookMenuButton?.addEventListener("click", () => {
-  setSidebarOpen(true);
-  requestAnimationFrame(() => els.sidebar.scrollTo({ top: 0, behavior: "auto" }));
 });
 els.closeSidebarButton?.addEventListener("click", () => setSidebarOpen(false));
 els.sidebarBackdrop?.addEventListener("click", () => setSidebarOpen(false));
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
+    setSearchPanelOpen(false, true);
     setSidebarOpen(false);
     hideSelectionActionMenu();
   }

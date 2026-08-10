@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>성경을 읽다 - 성경 번역본</title>
-    <link rel="stylesheet" href="./styles.css?v=global-home-v1" />
+    <link rel="stylesheet" href="./styles.css?v=passage-selectors-v1" />
   </head>
   <body data-bible-view="home" data-home-picker="none">
     <section class="bible-home" aria-label="성경 선택">
@@ -62,6 +62,7 @@
       <button type="button" data-app-section="today">오늘</button>
       <button type="button" data-app-section="devotional">묵상</button>
       <button type="button" data-app-section="gratitude">감사</button>
+      <button id="searchMenuButton" type="button" aria-controls="readerSearchPanel" aria-expanded="false">검색</button>
       <button id="toolsMenuButton" type="button" aria-controls="appSidebar" aria-expanded="false">메뉴</button>
     </nav>
 
@@ -164,18 +165,14 @@
               <span>번역본</span>
               <select id="translationSelect"></select>
             </label>
-            <label class="reader-search-control">
+          </section>
+
+          <section id="readerSearchPanel" class="reader-search-panel" aria-label="성경 검색" hidden>
+            <label>
               <span>성경 검색</span>
               <input id="searchInput" type="search" placeholder="구절, 단어 검색" autocomplete="off" />
             </label>
-            <button
-              id="readerBookMenuButton"
-              type="button"
-              aria-controls="appSidebar"
-              aria-expanded="false"
-            >
-              책/장 선택
-            </button>
+            <button id="closeSearchButton" type="button" aria-label="검색 닫기" title="검색 닫기">×</button>
           </section>
 
           <header class="reader-header">
@@ -200,10 +197,20 @@
           </section>
 
           <section class="reader-passage-navigation" aria-label="성경책과 장 이동">
-            <nav class="reader-chapter-strip-navigation" aria-label="현재 성경책의 장 선택">
-              <strong id="readerBookName" class="reader-current-book">창세기</strong>
-              <div id="readerChapterList" class="reader-chapter-list"></div>
-            </nav>
+            <div class="reader-passage-selectors">
+              <label class="reader-passage-select reader-book-select">
+                <span>성경책</span>
+                <select id="readerBookSelect" aria-label="성경책 선택"></select>
+              </label>
+              <label class="reader-passage-select">
+                <span>장</span>
+                <select id="readerChapterSelect" aria-label="장 선택"></select>
+              </label>
+              <label class="reader-passage-select">
+                <span>절</span>
+                <select id="readerVerseSelect" aria-label="절 선택"></select>
+              </label>
+            </div>
             <nav class="chapter-navigation chapter-navigation-top" aria-label="장 이동">
               <button type="button" data-chapter-direction="previous">‹ 이전 장</button>
               <button type="button" data-chapter-direction="next">다음 장 ›</button>
@@ -299,6 +306,6 @@
     <script src="./bibles-data.js?v=today-menu-v1"></script>
     <script src="./sblgnt-loader.js?v=today-menu-v1"></script>
     <script src="./wlc-loader.js?v=today-menu-v1"></script>
-    <script type="module" src="./app.js?v=global-home-v1"></script>
+    <script type="module" src="./app.js?v=passage-selectors-v1"></script>
   </body>
 </html>

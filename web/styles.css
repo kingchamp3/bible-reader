@@ -1026,8 +1026,7 @@ textarea {
   margin-top: 12px;
 }
 
-.chapter-navigation button,
-.reader-chapter-list button {
+.chapter-navigation button {
   background: var(--panel-soft);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -1042,9 +1041,7 @@ textarea {
 }
 
 .chapter-navigation button:hover:not(:disabled),
-.chapter-navigation button:focus-visible,
-.reader-chapter-list button:hover,
-.reader-chapter-list button:focus-visible {
+.chapter-navigation button:focus-visible {
   border-color: var(--green);
   color: var(--green);
   outline: 2px solid var(--green-soft);
@@ -1056,64 +1053,47 @@ textarea {
   opacity: 0.4;
 }
 
-.reader-chapter-strip-navigation {
-  align-items: stretch;
+.reader-passage-selectors {
   display: grid;
   gap: 8px;
-  grid-template-columns: minmax(104px, 160px) minmax(0, 1fr);
+  grid-template-columns: minmax(180px, 1.7fr) minmax(92px, 0.65fr) minmax(92px, 0.65fr);
   min-width: 0;
 }
 
-.reader-current-book {
-  align-items: center;
+.reader-passage-select {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.reader-passage-select span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.reader-passage-select select {
   background: var(--panel-soft);
   border: 1px solid var(--line);
   border-radius: 8px;
-  display: flex;
-  font-size: 15px;
-  justify-content: center;
-  min-height: 42px;
-  padding: 0 12px;
-  text-align: center;
-}
-
-.reader-chapter-list {
-  display: flex;
-  gap: 6px;
+  color: var(--ink);
+  font-weight: 850;
+  min-height: 48px;
   min-width: 0;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  padding: 2px 1px 8px;
-  scrollbar-color: var(--green) var(--panel-soft);
-  scrollbar-width: thin;
-  scroll-snap-type: x proximity;
+  padding: 0 34px 0 12px;
+  width: 100%;
 }
 
-.reader-chapter-list::-webkit-scrollbar {
-  height: 6px;
+.reader-book-select select {
+  font-size: 18px;
+  font-weight: 950;
 }
 
-.reader-chapter-list::-webkit-scrollbar-track {
-  background: var(--panel-soft);
-}
-
-.reader-chapter-list::-webkit-scrollbar-thumb {
-  background: var(--green);
-  border-radius: 8px;
-}
-
-.reader-chapter-list button {
-  flex: 0 0 auto;
-  min-height: 42px;
-  padding: 0 12px;
-  scroll-snap-align: center;
-  white-space: nowrap;
-}
-
-.reader-chapter-list button.active {
-  background: var(--green);
+.reader-passage-select select:hover,
+.reader-passage-select select:focus-visible {
   border-color: var(--green);
-  color: #fff;
+  outline: 2px solid var(--green-soft);
+  outline-offset: 1px;
 }
 
 .bookmark-count {
@@ -1167,6 +1147,10 @@ textarea {
 
 .verse-row.marked {
   background: var(--marked);
+}
+
+.verse-row.verse-target {
+  box-shadow: inset 4px 0 0 var(--green);
 }
 
 .verse-row[data-highlight="yellow"] {
@@ -1587,24 +1571,6 @@ textarea {
     padding: 0 5px;
   }
 
-  .reader-chapter-strip-navigation {
-    grid-template-columns: minmax(84px, 128px) minmax(0, 1fr);
-  }
-
-  .reader-current-book {
-    font-size: 13px;
-    padding: 0 9px;
-  }
-
-  .reader-chapter-list {
-    gap: 5px;
-  }
-
-  .reader-chapter-list button {
-    font-size: 13px;
-    padding: 0 10px;
-  }
-
   .verse-row {
     padding: 16px 18px;
   }
@@ -1781,19 +1747,17 @@ body[data-sidebar-open="true"] .sidebar-backdrop {
   border-radius: 8px 8px 0 0;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(160px, 220px) minmax(260px, 1fr) auto;
+  grid-template-columns: minmax(160px, 240px);
   padding: 12px 16px;
 }
 
-.reader-translation-control,
-.reader-search-control {
+.reader-translation-control {
   display: grid;
   gap: 4px;
   min-width: 0;
 }
 
-.reader-translation-control span,
-.reader-search-control span {
+.reader-translation-control span {
   color: var(--muted);
   font-size: 11px;
   font-weight: 800;
@@ -1820,6 +1784,71 @@ body[data-sidebar-open="true"] .sidebar-backdrop {
   color: var(--green);
   outline: 2px solid var(--green-soft);
   outline-offset: 1px;
+}
+
+.reader-search-panel {
+  align-items: end;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  bottom: 70px;
+  box-shadow: 0 14px 40px rgba(24, 38, 33, 0.2);
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  left: 50%;
+  padding: 12px;
+  position: fixed;
+  transform: translateX(-50%);
+  width: min(720px, calc(100vw - 24px));
+  z-index: 55;
+}
+
+.reader-search-panel[hidden] {
+  display: none;
+}
+
+.reader-search-panel label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.reader-search-panel label span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.reader-search-panel input {
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  min-height: 44px;
+  min-width: 0;
+  padding: 0 12px;
+  width: 100%;
+}
+
+.reader-search-panel input:focus-visible {
+  border-color: var(--green);
+  outline: 2px solid var(--green-soft);
+  outline-offset: 1px;
+}
+
+.reader-search-panel > button {
+  align-items: center;
+  background: var(--panel-soft);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  display: inline-flex;
+  font-size: 24px;
+  height: 44px;
+  justify-content: center;
+  padding: 0;
+  width: 44px;
 }
 
 body[data-active-section="bible"] .reader-panel {
@@ -1931,6 +1960,11 @@ body[data-active-section="bible"] .chapter-navigation button {
     top: 59px;
   }
 
+  .reader-search-panel {
+    bottom: auto;
+    top: 70px;
+  }
+
   .reader-panel {
     padding: 24px 28px 48px;
   }
@@ -1945,21 +1979,12 @@ body[data-active-section="bible"] .chapter-navigation button {
     border-left: 0;
     border-radius: 0;
     border-right: 0;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
     padding: 12px;
   }
 
   .reader-translation-control {
     order: 1;
-  }
-
-  .reader-search-control {
-    grid-column: 1 / -1;
-    order: 3;
-  }
-
-  .reader-utility-bar > button {
-    order: 2;
   }
 
   body[data-active-section="bible"] .reader-header,
@@ -2023,31 +2048,6 @@ body[data-active-section="bible"] .chapter-navigation button {
   opacity: 0.38;
 }
 
-body[data-active-section="bible"] .reader-chapter-list {
-  display: grid;
-  gap: 6px;
-  grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
-  max-height: 90px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  padding: 1px 7px 1px 1px;
-  scroll-snap-type: none;
-  scrollbar-color: var(--green) var(--panel-soft);
-  scrollbar-width: thin;
-}
-
-body[data-active-section="bible"] .reader-chapter-list::-webkit-scrollbar {
-  height: auto;
-  width: 6px;
-}
-
-body[data-active-section="bible"] .reader-chapter-list button {
-  min-height: 38px;
-  padding: 0 6px;
-  width: auto;
-}
-
 body[data-compare-count="2"] .compare-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -2093,11 +2093,6 @@ body[data-active-section="bible"] .verse-list {
     padding: 0 10px;
   }
 
-  body[data-active-section="bible"] .reader-chapter-list {
-    grid-template-columns: repeat(4, minmax(44px, 1fr));
-    max-height: 88px;
-  }
-
   body[data-active-section="bible"] .reader-header h2 {
     font-size: 30px;
   }
@@ -2109,6 +2104,31 @@ body[data-active-section="bible"] .verse-list {
   .main-menu button.active {
     background: var(--ink);
     color: var(--panel);
+  }
+}
+
+@media (max-width: 520px) {
+  .main-menu {
+    gap: 2px;
+  }
+
+  .main-menu button {
+    font-size: 11px;
+    padding: 0 2px;
+  }
+
+  .reader-passage-selectors {
+    grid-template-columns: minmax(0, 1.5fr) minmax(68px, 0.75fr) minmax(68px, 0.75fr);
+  }
+
+  .reader-passage-select select {
+    min-height: 44px;
+    padding-left: 9px;
+    padding-right: 24px;
+  }
+
+  .reader-book-select select {
+    font-size: 15px;
   }
 }
 
